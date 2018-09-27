@@ -13,7 +13,7 @@ class ProjectMan():
         """project_root: str: repr root folder of projects"""
         self.project_root = pathlib.Path(project_root)
 
-    IGNORED = ['visualhouse', '1 From AWS', 'Thumbs.db']
+        self.IGNORED = ['visualhouse', '1 From AWS', 'Thumbs.db', '.DS_Store']
 
     
     def _max_path_safe(self, directory):
@@ -53,13 +53,38 @@ class ProjectMan():
     def walk_client_projects(self, client_name):
         folders = []
         client_dir = f'{self.project_root}{client_name}'
-        client = os.listdir(client_dir)
+        client_folders = os.listdir(client_dir)
+        projects_issued = {}
 
-        for folder in client:
-            if os.path.isdir(client_dir) and not folder.startswith('.') and not folder.startswith('#') and folder not in self.IGNORED:
-                folders.append(folder)
+        for project in client_folders:
+            if os.path.isdir(client_dir) and not project.startswith('.') and not project.startswith('#') and project not in self.IGNORED:
+                folders.append(project)
 
-        return sorted(folders)
+                if project not in projects_issued:
+                    projects_issued[project] = []
+
+                projects_issued[project] = [x for x in os.listdir(f'{client_dir}\\{project}') if x not in self.IGNORED]
+
+
+        return projects_issued
+
+
+    def walk_client_project_issued(self, client_name, project_name, job_name):
+        project_dir = f'{self.project_root}{client_name}\\{project_name}\\{job_name}'
+        project_folders = os.listdir(project_dir)
+        result = {}
+
+        for folder in project_folders:
+            if folder.lower() == 'support':
+                project_issued_information = f'{project_dir}\\{folder}\\Issued Information'
+                issued_dir = os.listdir(project_issued_information)
+
+                for issued in issued_dir:
+                    if issued not in result and issued not in self.IGNORED:
+                        result[issued] = os.listdir(f'{project_issued_information}\\{issued}')
+
+        return result
+
 
 
     def project_checker(self, project_name):
@@ -83,7 +108,3 @@ class ProjectMan():
         details['error_max_length_count'] = len(details['error_max_length'])
 
         return details
-        
-
-# status = ProjectMan('z:\\').project_checker('Gale International')
-# print(status)
