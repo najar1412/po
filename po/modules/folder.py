@@ -86,6 +86,19 @@ class ProjectMan():
         return result
 
 
+    def walk_client_project_masters(self, client_name, project_name, job_name):
+        master_dir = f'{self.project_root}{client_name}\\{project_name}\\{job_name}\\Still & Film\\Max Files\\Still Imagery\\Master'
+        master_folders = os.listdir(master_dir)
+
+        return master_folders
+
+
+    def walk_client_project_scenes(self, client_name, project_name, job_name):
+        master_dir = f'{self.project_root}{client_name}\\{project_name}\\{job_name}\\Still & Film\\Max Files\\Still Imagery\\Scene'
+        master_folders = os.listdir(master_dir)
+
+        return master_folders
+
 
     def project_checker(self, project_name):
         details = {

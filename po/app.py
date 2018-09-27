@@ -27,6 +27,8 @@ class Form(QObject):
         self.client_list = self.window.findChild(QListWidget, 'client_list')
         self.project_tree = self.window.findChild(QTreeWidget, 'project_tree')
         self.issued_tree = self.window.findChild(QTreeWidget, 'issued_tree')
+        self.master_tree = self.window.findChild(QListWidget, 'master_files')
+        self.scene_tree = self.window.findChild(QListWidget, 'scene_files')
 
         # widget actions
         self.client_list.itemSelectionChanged.connect(self.action_client_list_changed)
@@ -56,19 +58,23 @@ class Form(QObject):
     def action_project_tree_changed(self):
         """logic to run when user selects a project/job"""
         client_name = self.client_list.currentItem().text()
-        t = folder.ProjectMan(self.project_root).walk_client_projects(client_name)
+        projects = folder.ProjectMan(self.project_root).walk_client_projects(client_name)
+        project_selection = self.project_tree.selectedItems()
 
-        getSelection = self.project_tree.selectedItems()
-        if getSelection:
-            baseNode = getSelection[0]
-            get_child_node = baseNode.text(0)
+        if project_selection:
+            selection_name = project_selection[0].text(0)
 
-            if get_child_node not in t:
-                self.update_issued_tree(get_child_node)
+            if selection_name not in projects:
+                master_files_names = folder.ProjectMan(self.project_root).walk_client_project_masters(client_name, self.project_name, selection_name)
+                scene_files_names = folder.ProjectMan(self.project_root).walk_client_project_scenes(client_name, self.project_name, selection_name)
+                self.update_issued_tree(selection_name)
+                self.update_master_tree(master_files_names)
+                self.update_scene_tree(scene_files_names)
 
-                return get_child_node
+                return selection_name
+
             else:
-                self.project_name = get_child_node
+                self.project_name = selection_name
 
         return False
 
@@ -104,6 +110,21 @@ class Form(QObject):
                 for val in value:
                     item = QTreeWidgetItem([val])
                     root.addChild(item)
+
+        return True
+
+
+    def update_master_tree(self, files):
+        self.master_tree.clear()
+        for file in files:
+            self.master_tree.addItem(file)
+
+        return True
+
+    def update_scene_tree(self, files):
+        self.scene_tree.clear()
+        for file in files:
+            self.scene_tree.addItem(file)
 
         return True
  
