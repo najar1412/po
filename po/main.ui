@@ -14,25 +14,38 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QListWidget" name="listWidget">
+   <widget class="QListWidget" name="client_list">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>50</y>
-      <width>256</width>
-      <height>41</height>
+      <x>30</x>
+      <y>20</y>
+      <width>401</width>
+      <height>131</height>
      </rect>
     </property>
    </widget>
-   <widget class="QTreeWidget" name="treeWidget">
+   <widget class="QListWidget" name="project_list">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>200</y>
-      <width>151</width>
-      <height>192</height>
+      <x>30</x>
+      <y>170</y>
+      <width>401</width>
+      <height>81</height>
      </rect>
     </property>
+   </widget>
+   <widget class="QTreeWidget" name="issued_tree">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>270</y>
+      <width>401</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <attribute name="headerVisible">
+     <bool>false</bool>
+    </attribute>
     <column>
      <property name="text">
       <string notr="true">1</string>
