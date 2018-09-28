@@ -20,7 +20,7 @@ class Form(QObject):
         ui_file.close()
 
         # globals
-        self.project_root = 'z:\\'
+        self.project_root = 'd:\\'
         self.project_name = ''
 
         # widgets
@@ -41,7 +41,7 @@ class Form(QObject):
 
     def get_clients(self):
         """appends list of clients to client_list"""
-        clients = folder.ProjectMan(self.project_root).walk_clients()
+        clients = folder.ProjectMan(self.project_root).get_clients()
         
         for client in clients:
             self.client_list.addItem(client)
@@ -58,15 +58,15 @@ class Form(QObject):
     def action_project_tree_changed(self):
         """logic to run when user selects a project/job"""
         client_name = self.client_list.currentItem().text()
-        projects = folder.ProjectMan(self.project_root).walk_client_projects(client_name)
+        projects = folder.ProjectMan(self.project_root).get_projects_and_jobs(client_name)
         project_selection = self.project_tree.selectedItems()
 
         if project_selection:
             selection_name = project_selection[0].text(0)
 
             if selection_name not in projects:
-                master_files_names = folder.ProjectMan(self.project_root).walk_client_project_masters(client_name, self.project_name, selection_name)
-                scene_files_names = folder.ProjectMan(self.project_root).walk_client_project_scenes(client_name, self.project_name, selection_name)
+                master_files_names = folder.ProjectMan(self.project_root).get_master_files(client_name, self.project_name, selection_name)
+                scene_files_names = folder.ProjectMan(self.project_root).get_scene_files(client_name, self.project_name, selection_name)
                 self.update_issued_tree(selection_name)
                 self.update_master_tree(master_files_names)
                 self.update_scene_tree(scene_files_names)
@@ -84,7 +84,7 @@ class Form(QObject):
         self.project_tree.clear()
         self.issued_tree.clear()
 
-        t = folder.ProjectMan(self.project_root).walk_client_projects(client_name)
+        t = folder.ProjectMan(self.project_root).get_projects_and_jobs(client_name)
 
         for key, value in t.items():
             root = QTreeWidgetItem(self.project_tree, [key])

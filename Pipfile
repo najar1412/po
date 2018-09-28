@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 "pyside2" = "*"
 "pyqt5-tools" = "*"
+pylint = "*"
 
 [dev-packages]
 

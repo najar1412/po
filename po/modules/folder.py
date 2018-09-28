@@ -36,37 +36,37 @@ class ProjectMan():
         return project
 
 
-    def walk_clients(self):
-        """HELPER: Scans project drive
-        Return: List: clients and developers
-        """
-        folders = []
+    def get_clients(self):
+        """get all client folders from self.project_root
+        Return: List: ['client', 'client', 'client']"""
+        # TODO: imp file, folder checking
+        result = []
         clients = os.listdir(self.project_root)
 
-        for item in clients:
-            if os.path.isdir(f'{self.project_root}{item}') and not item.startswith('.') and not item.startswith('#') and item not in self.IGNORED:
-                folders.append(item)
+        for client in clients:
+            if os.path.isdir(f'{self.project_root}{client}'):
+                result.append(client)
 
-        return sorted(folders)
-
-
-    def walk_client_projects(self, client_name):
-        folders = []
-        client_dir = f'{self.project_root}{client_name}'
-        client_folders = os.listdir(client_dir)
-        projects_issued = {}
-
-        for project in client_folders:
-            if os.path.isdir(client_dir) and not project.startswith('.') and not project.startswith('#') and project not in self.IGNORED:
-                folders.append(project)
-
-                if project not in projects_issued:
-                    projects_issued[project] = []
-
-                projects_issued[project] = [x for x in os.listdir(f'{client_dir}\\{project}') if x not in self.IGNORED]
+        return sorted(result)
 
 
-        return projects_issued
+    def get_projects_and_jobs(self, client):
+        """retrieves all of a clients projects and tasks.
+        client: str: name of client as written in directory.
+        return: dict: {'project_name': ['job', 'job', 'job']}"""
+        # TODO: imp file, folder checking
+        client_dir = f'{self.project_root}{client}'
+        projects = os.listdir(client_dir)
+        projects_and_jobs = {}
+
+        for project in projects:
+            project_dir = f'{client_dir}\\{project}'
+            if os.path.isdir(project_dir):
+                projects_and_jobs[project] = [
+                    x for x in os.listdir(project_dir)
+                ]
+
+        return projects_and_jobs
 
 
     def walk_client_project_issued(self, client_name, project_name, job_name):
@@ -86,18 +86,41 @@ class ProjectMan():
         return result
 
 
-    def walk_client_project_masters(self, client_name, project_name, job_name):
-        master_dir = f'{self.project_root}{client_name}\\{project_name}\\{job_name}\\Still & Film\\Max Files\\Still Imagery\\Master'
-        master_folders = os.listdir(master_dir)
+    def _string_builder(self, args):
+        _str = ''
+        for loc in args:
+            _str = f'{_str}\\{loc}'
+        
+        return _str
 
-        return master_folders
+
+    def dir_from_root(self, *args):
+        return f'{self.project_root}{self._string_builder(args)}'
+        
+
+    def get_master_files(self, client_name, project_name, job_name):
+        """gets all names of files from a still project Master folder
+        return: list: ['file', 'file', 'file']"""
+        # TODO: imp file/folder checking
+        master_folder_dir = self.dir_from_root(
+            client_name, project_name, job_name, 'Still & Film', 
+            'Max Files', 'Still Imagery', 'Master'
+        )
+        
+        return os.listdir(master_folder_dir)
 
 
-    def walk_client_project_scenes(self, client_name, project_name, job_name):
-        master_dir = f'{self.project_root}{client_name}\\{project_name}\\{job_name}\\Still & Film\\Max Files\\Still Imagery\\Scene'
-        master_folders = os.listdir(master_dir)
+    def get_scene_files(self, client_name, project_name, job_name):
+        """gets all names of files from a still project Scene folder
+        return: list: ['file', 'file', 'file']"""
+        # TODO: imp file/folder checking
+        self.dir_from_root(client_name, project_name, job_name, )
+        scene_folder_dir = self.dir_from_root(
+            client_name, project_name, job_name, 'Still & Film', 
+            'Max Files', 'Still Imagery', 'Scene'
+        )
 
-        return master_folders
+        return os.listdir(scene_folder_dir)
 
 
     def project_checker(self, project_name):
