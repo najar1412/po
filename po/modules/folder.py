@@ -7,11 +7,115 @@ import os
 # display drive projects
 # archive project
 
+class Manager():
+    """tools built around default project structure"""
+    def __init__(self, root):
+        self.root = pathlib.Path(root)
+
+        # TODO: imp file, folder checking.
+        self.IGNORED = ['visualhouse', '1 From AWS', 'Thumbs.db', '.DS_Store']
+
+
+    def _string_builder(self, args):
+        """builds directory from a list of strings"""
+        # TODO: pathlib for crossplatform support.
+        _str = ''
+        for loc in args:
+            _str = f'{_str}\\{loc}'
+        
+        return _str
+
+
+    def dir_from_root(self, *args):
+        return f'{self.root}{self._string_builder(args)}'
+
+
+    def get_clients(self):
+        """get all client folders from self.root
+        Return: List: ['client', 'client', 'client']"""
+        # TODO: imp file, folder checking
+        result = []
+        clients = os.listdir(self.root)
+
+        for client in clients:
+            if os.path.isdir(f'{self.root}{client}'):
+                result.append(client)
+
+        return sorted(result)
+
+
+    def get_projects_and_jobs(self, client):
+        """retrieves all of a clients projects and tasks.
+        client: str: name of client as written in directory.
+        return: dict: {'project_name': ['job', 'job', 'job']}"""
+        # TODO: imp file, folder checking
+        client_dir = f'{self.root}{client}'
+        projects = os.listdir(client_dir)
+        projects_and_jobs = {}
+
+        for project in projects:
+            project_dir = f'{client_dir}\\{project}'
+            if os.path.isdir(project_dir):
+                projects_and_jobs[project] = [
+                    x for x in os.listdir(project_dir)
+                ]
+
+        return projects_and_jobs
+
+
+    def get_issues_files(self, client_name, project_name, job_name):
+        """retrieves all of a jobs issued information.
+        client_name: str: name of client as written in directory.
+        project_name: str: name of project as written in directory.
+        job_name: str: name of job as written in directory.
+        return: dict: {'issue_folder': ['issue', 'issue', 'issue']}"""
+        # TODO: imp file, folder checking
+        issued_dir = self.dir_from_root(
+            client_name, project_name, job_name, 'Support', 
+            'Issued Information'
+        )
+        result = {}
+
+        for issued_folder in os.listdir(issued_dir):
+            if issued_folder not in result:
+                result[issued_folder] = os.listdir(
+                    f'{issued_dir}\\{issued_folder}'
+                )
+
+        return result
+
+
+    def get_master_files(self, client_name, project_name, job_name):
+        """gets all names of files from a still project Master folder
+        return: list: ['file', 'file', 'file']"""
+        # TODO: imp file/folder checking
+        master_folder_dir = self.dir_from_root(
+            client_name, project_name, job_name, 'Still & Film', 
+            'Max Files', 'Still Imagery', 'Master'
+        )
+        
+        return os.listdir(master_folder_dir)
+
+
+    def get_scene_files(self, client_name, project_name, job_name):
+        """gets all names of files from a still project Scene folder
+        return: list: ['file', 'file', 'file']"""
+        # TODO: imp file/folder checking
+        self.dir_from_root(client_name, project_name, job_name, )
+        scene_folder_dir = self.dir_from_root(
+            client_name, project_name, job_name, 'Still & Film', 
+            'Max Files', 'Still Imagery', 'Scene'
+        )
+
+        return os.listdir(scene_folder_dir)
+
+
+# old, could be helpful code
 class ProjectMan():
-    """reports of project structure"""
+    """tools built around default project structure"""
     def __init__(self, project_root):
         """project_root: str: repr root folder of projects"""
-        self.project_root = pathlib.Path(project_root)
+        self.root = pathlib.Path(project_root)
 
         self.IGNORED = ['visualhouse', '1 From AWS', 'Thumbs.db', '.DS_Store']
 
@@ -29,7 +133,7 @@ class ProjectMan():
         project_name: str: name of the folder to walk
         return: dict: {'directory': ['folders': [], 'files': []]}"""
         project = {}
-        for (dirpath, dirnames, filenames) in os.walk(pathlib.Path(self.project_root, project_name)):
+        for (dirpath, dirnames, filenames) in os.walk(pathlib.Path(self.root, project_name)):
             if dirpath not in project:
                 project[dirpath] = {'folders': dirnames, 'files': filenames}
 
@@ -37,14 +141,14 @@ class ProjectMan():
 
 
     def get_clients(self):
-        """get all client folders from self.project_root
+        """get all client folders from self.root
         Return: List: ['client', 'client', 'client']"""
         # TODO: imp file, folder checking
         result = []
-        clients = os.listdir(self.project_root)
+        clients = os.listdir(self.root)
 
         for client in clients:
-            if os.path.isdir(f'{self.project_root}{client}'):
+            if os.path.isdir(f'{self.root}{client}'):
                 result.append(client)
 
         return sorted(result)
@@ -55,7 +159,7 @@ class ProjectMan():
         client: str: name of client as written in directory.
         return: dict: {'project_name': ['job', 'job', 'job']}"""
         # TODO: imp file, folder checking
-        client_dir = f'{self.project_root}{client}'
+        client_dir = f'{self.root}{client}'
         projects = os.listdir(client_dir)
         projects_and_jobs = {}
 
@@ -69,19 +173,24 @@ class ProjectMan():
         return projects_and_jobs
 
 
-    def walk_client_project_issued(self, client_name, project_name, job_name):
-        project_dir = f'{self.project_root}{client_name}\\{project_name}\\{job_name}'
-        project_folders = os.listdir(project_dir)
+    def get_issues_files(self, client_name, project_name, job_name):
+        """retrieves all of a jobs issued information.
+        client_name: str: name of client as written in directory.
+        project_name: str: name of project as written in directory.
+        job_name: str: name of job as written in directory.
+        return: dict: {'issue_folder': ['issue', 'issue', 'issue']}"""
+        # TODO: imp file, folder checking
+        issued_dir = self.dir_from_root(
+            client_name, project_name, job_name, 'Support', 
+            'Issued Information'
+        )
         result = {}
 
-        for folder in project_folders:
-            if folder.lower() == 'support':
-                project_issued_information = f'{project_dir}\\{folder}\\Issued Information'
-                issued_dir = os.listdir(project_issued_information)
-
-                for issued in issued_dir:
-                    if issued not in result and issued not in self.IGNORED:
-                        result[issued] = os.listdir(f'{project_issued_information}\\{issued}')
+        for issued_folder in os.listdir(issued_dir):
+            if issued_folder not in result:
+                result[issued_folder] = os.listdir(
+                    f'{issued_dir}\\{issued_folder}'
+                )
 
         return result
 
@@ -95,7 +204,7 @@ class ProjectMan():
 
 
     def dir_from_root(self, *args):
-        return f'{self.project_root}{self._string_builder(args)}'
+        return f'{self.root}{self._string_builder(args)}'
         
 
     def get_master_files(self, client_name, project_name, job_name):

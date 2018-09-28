@@ -41,7 +41,7 @@ class Form(QObject):
 
     def get_clients(self):
         """appends list of clients to client_list"""
-        clients = folder.ProjectMan(self.project_root).get_clients()
+        clients = folder.Manager(self.project_root).get_clients()
         
         for client in clients:
             self.client_list.addItem(client)
@@ -58,15 +58,15 @@ class Form(QObject):
     def action_project_tree_changed(self):
         """logic to run when user selects a project/job"""
         client_name = self.client_list.currentItem().text()
-        projects = folder.ProjectMan(self.project_root).get_projects_and_jobs(client_name)
+        projects = folder.Manager(self.project_root).get_projects_and_jobs(client_name)
         project_selection = self.project_tree.selectedItems()
 
         if project_selection:
             selection_name = project_selection[0].text(0)
 
             if selection_name not in projects:
-                master_files_names = folder.ProjectMan(self.project_root).get_master_files(client_name, self.project_name, selection_name)
-                scene_files_names = folder.ProjectMan(self.project_root).get_scene_files(client_name, self.project_name, selection_name)
+                master_files_names = folder.Manager(self.project_root).get_master_files(client_name, self.project_name, selection_name)
+                scene_files_names = folder.Manager(self.project_root).get_scene_files(client_name, self.project_name, selection_name)
                 self.update_issued_tree(selection_name)
                 self.update_master_tree(master_files_names)
                 self.update_scene_tree(scene_files_names)
@@ -84,7 +84,7 @@ class Form(QObject):
         self.project_tree.clear()
         self.issued_tree.clear()
 
-        t = folder.ProjectMan(self.project_root).get_projects_and_jobs(client_name)
+        t = folder.Manager(self.project_root).get_projects_and_jobs(client_name)
 
         for key, value in t.items():
             root = QTreeWidgetItem(self.project_tree, [key])
@@ -101,7 +101,7 @@ class Form(QObject):
         self.issued_tree.clear()
 
         client_name = self.client_list.currentItem().text()
-        t = folder.ProjectMan(self.project_root).walk_client_project_issued(client_name, self.project_name, job)
+        t = folder.Manager(self.project_root).get_issues_files(client_name, self.project_name, job)
 
         for key, value in t.items():
             root = QTreeWidgetItem(self.issued_tree, [key])
@@ -120,6 +120,7 @@ class Form(QObject):
             self.master_tree.addItem(file)
 
         return True
+
 
     def update_scene_tree(self, files):
         self.scene_tree.clear()
