@@ -20,7 +20,7 @@ class Form(QObject):
         ui_file.close()
 
         # globals
-        self.project_root = 'd:\\'
+        self.project_root = 'z:\\'
         self.project_name = ''
 
         # widgets
@@ -33,6 +33,7 @@ class Form(QObject):
         # widget actions
         self.client_list.itemSelectionChanged.connect(self.action_client_list_changed)
         self.project_tree.itemSelectionChanged.connect(self.action_project_tree_changed)
+        self.issued_tree.itemSelectionChanged.connect(self.action_issued_tree_changed)
 
         # start up logic
         self.get_clients()
@@ -77,6 +78,18 @@ class Form(QObject):
                 self.project_name = selection_name
 
         return False
+
+
+    def action_issued_tree_changed(self):
+            """logic to run when user selects an issued"""
+            folder.OpenFile('testy test').test()
+            issued_selection = self.issued_tree.selectedItems()
+
+            if issued_selection:
+                selection_name = issued_selection[0].text(0)
+                print(selection_name)
+
+            return True
 
 
     def update_project_tree(self, client_name):

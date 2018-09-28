@@ -110,6 +110,18 @@ class Manager():
         return os.listdir(scene_folder_dir)
 
 
+class OpenFile():
+    def __init__(self, location):
+        self.location = location
+
+    def open(self):
+        os.system(f'start {self.location}')
+
+    def test(self):
+        print(self.location)
+        print('testing fine!')
+        
+
 # old, could be helpful code
 class ProjectMan():
     """tools built around default project structure"""
