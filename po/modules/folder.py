@@ -8,7 +8,8 @@ import os
 # archive project
 
 class Manager():
-    """tools built around default project structure"""
+    """tools built around default project structure.
+    root: str: ..."""
     def __init__(self, root):
         self.root = pathlib.Path(root)
 
@@ -115,6 +116,9 @@ class OpenFile():
         self.location = location
 
     def open(self):
+        # TODO: catch the windows exception if file
+        # not found?
+        print(self.location)
         os.system(f'start {self.location}')
 
     def test(self):

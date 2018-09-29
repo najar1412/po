@@ -7,6 +7,12 @@ from PySide2.QtCore import QFile, QObject
 from modules import folder
  
 
+ # TODO: figure out multiple forms? settings form for instance
+ # TODO: open files (issues)
+ # TODO: impl folder shortcuts
+ # TODO: figure out how to check if the client..project..job file 
+ # #struture is correct? and to know display them?
+
 class Form(QObject):
     """qt form"""
     def __init__(self, ui_file, parent=None):
@@ -20,8 +26,11 @@ class Form(QObject):
         ui_file.close()
 
         # globals
-        self.project_root = 'z:\\'
-        self.project_name = ''
+        self.project_root = 'd:\\'
+        self.PROJECT = ''
+        self.CLIENT = ''
+        self.JOB = ''
+        self.ISSUE = ''
 
         # widgets
         self.client_list = self.window.findChild(QListWidget, 'client_list')
@@ -51,45 +60,53 @@ class Form(QObject):
     def action_client_list_changed(self):
         """logic to run when user selects a Client"""
         self.project_tree.clear()
-        client_name = self.client_list.currentItem().text()
+        self.CLIENT = self.client_list.currentItem().text()
 
-        return self.update_project_tree(client_name)
+        return self.update_project_tree(self.CLIENT)
 
 
     def action_project_tree_changed(self):
         """logic to run when user selects a project/job"""
-        client_name = self.client_list.currentItem().text()
-        projects = folder.Manager(self.project_root).get_projects_and_jobs(client_name)
+        self.CLIENT = self.client_list.currentItem().text()
+        projects = folder.Manager(self.project_root).get_projects_and_jobs(self.CLIENT)
         project_selection = self.project_tree.selectedItems()
 
         if project_selection:
             selection_name = project_selection[0].text(0)
 
             if selection_name not in projects:
-                master_files_names = folder.Manager(self.project_root).get_master_files(client_name, self.project_name, selection_name)
-                scene_files_names = folder.Manager(self.project_root).get_scene_files(client_name, self.project_name, selection_name)
-                self.update_issued_tree(selection_name)
+                self.JOB = selection_name
+                master_files_names = folder.Manager(self.project_root).get_master_files(self.CLIENT, self.PROJECT, self.JOB)
+                scene_files_names = folder.Manager(self.project_root).get_scene_files(self.CLIENT, self.PROJECT, self.JOB)
+                self.update_issued_tree(self.JOB)
                 self.update_master_tree(master_files_names)
                 self.update_scene_tree(scene_files_names)
 
                 return selection_name
 
             else:
-                self.project_name = selection_name
+                self.PROJECT = selection_name
 
         return False
 
 
     def action_issued_tree_changed(self):
-            """logic to run when user selects an issued"""
-            folder.OpenFile('testy test').test()
-            issued_selection = self.issued_tree.selectedItems()
+            """checks wether or not the selected item is a file and runs it."""
+            client = self.client_list.currentItem().text()
+            project = self.project_tree.currentItem().parent().text(0)
 
-            if issued_selection:
-                selection_name = issued_selection[0].text(0)
-                print(selection_name)
+            if self.issued_tree.currentItem().parent():
+                job = self.issued_tree.currentItem().parent().text(0)
 
-            return True
+                lissue_file_loc = folder.Manager(self.project_root).dir_from_root(
+                    client, project, job, 'Support', 'Issued Information', 
+                    self.issued_tree.currentItem().text(0)
+                    )
+
+                folder.OpenFile(f'"{lissue_file_loc}"').open()
+            
+            else:
+                pass
 
 
     def update_project_tree(self, client_name):
@@ -114,7 +131,7 @@ class Form(QObject):
         self.issued_tree.clear()
 
         client_name = self.client_list.currentItem().text()
-        t = folder.Manager(self.project_root).get_issues_files(client_name, self.project_name, job)
+        t = folder.Manager(self.project_root).get_issues_files(client_name, self.PROJECT, job)
 
         for key, value in t.items():
             root = QTreeWidgetItem(self.issued_tree, [key])
