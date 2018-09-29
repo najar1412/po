@@ -7,14 +7,13 @@ from PySide2.QtWidgets import (
 )
 from PySide2.QtCore import QFile, QObject
 
-from modules import folder
+from modules import io
  
 
- # TODO: figure out multiple forms? settings form for instance
- # TODO: open files (issues)
- # TODO: impl folder shortcuts
- # TODO: figure out how to check if the client..project..job file 
- # #struture is correct? and to know display them?
+# TODO: figure out multiple forms? settings form for instance
+# TODO: figure out how to check if the client..project..job file 
+# struture is correct?
+
 
 class Form(QObject):
     """qt form"""
@@ -30,17 +29,13 @@ class Form(QObject):
 
         # globals
         self.project_root = "d:\\"
-        self.PROJECT = ''
-        self.CLIENT = ''
-        self.JOB = ''
-        self.ISSUE = ''
 
         # widgets
         self.client_list = self.window.findChild(QListWidget, 'client_list')
         self.project_tree = self.window.findChild(QTreeWidget, 'project_tree')
         self.issued_tree = self.window.findChild(QTreeWidget, 'issued_tree')
-        self.master_tree = self.window.findChild(QListWidget, 'master_files')
-        self.scene_tree = self.window.findChild(QListWidget, 'scene_files')
+        self.master_list = self.window.findChild(QListWidget, 'master_files')
+        self.scene_list = self.window.findChild(QListWidget, 'scene_files')
         self.fs_ref = self.window.findChild(QPushButton, 'fs_ref')
         self.fs_photography = self.window.findChild(QPushButton, 'fs_photography')
         self.fs_artdirection = self.window.findChild(QPushButton, 'fs_artdirection')
@@ -48,17 +43,17 @@ class Form(QObject):
 
         # groups
         self.project_job_groupbox = self.window.findChild(QGroupBox, 'project_job_groupbox')
-        self.folder_shortcuts = self.window.findChild(QGroupBox, 'folder_shortcuts')
-        self.tabWidget = self.window.findChild(QTabWidget, 'tabWidget')
-
         self.hide(self.project_job_groupbox)
+        self.folder_shortcuts = self.window.findChild(QGroupBox, 'folder_shortcuts')
         self.hide(self.folder_shortcuts)
+        self.tabWidget = self.window.findChild(QTabWidget, 'tabWidget')
         self.hide(self.tabWidget)
 
         # widget actions
         self.client_list.itemSelectionChanged.connect(self.action_client_list_changed)
         self.project_tree.itemSelectionChanged.connect(self.action_project_tree_changed)
         self.issued_tree.itemSelectionChanged.connect(self.action_issued_tree_changed)
+        self.master_list.itemSelectionChanged.connect(self.action_master_tree_changed)
         self.fs_ref.clicked.connect(self.clicked_fs_ref)
         self.fs_photography.clicked.connect(self.clicked_fs_photography)
         self.fs_render.clicked.connect(self.clicked_fs_render)
@@ -68,6 +63,7 @@ class Form(QObject):
         self.window.show()
 
 
+    # utility
     def hide(self, widget):
         """hides a widget"""
         widget.close()
@@ -78,53 +74,49 @@ class Form(QObject):
         widget.show()
 
 
-    def get_clients(self):
-        """appends list of clients to client_list"""
-        clients = folder.Manager(self.project_root).get_clients()
-        
-        for client in clients:
-            self.client_list.addItem(client)
-
-
+    # widget actions
     def action_client_list_changed(self):
         """logic to run when user selects a Client"""
         self.project_tree.clear()
+
+        client = self.client_list.currentItem().text()
+
         self.hide(self.folder_shortcuts)
         self.hide(self.tabWidget)
-        self.show(self.project_job_groupbox)
-        self.CLIENT = self.client_list.currentItem().text()
 
-        return self.update_project_tree(self.CLIENT)
+        self.show(self.project_job_groupbox)
+
+        return self.update_project_tree(client)
 
 
     def action_project_tree_changed(self):
         """logic to run when user selects a project/job"""
-        self.CLIENT = self.client_list.currentItem().text()
-        projects = folder.Manager(self.project_root).get_projects_and_jobs(self.CLIENT)
-        project_selection = self.project_tree.selectedItems()
+        self.master_list.clear()
+        self.scene_list.clear()
+        self.issued_tree.clear()
 
-        if project_selection:
-            selection_name = project_selection[0].text(0)
+        client = self.client_list.currentItem().text()
+        
+        if self.project_tree.currentItem().parent():
+            project = self.project_tree.currentItem().parent().text(0)
+            job = self.project_tree.currentItem().text(0)
 
-            if selection_name not in projects:
-                self.show(self.folder_shortcuts)
-                self.show(self.tabWidget)
-                self.JOB = selection_name
+            master_files_names = io.Manager(self.project_root).get_master_files(client, project, job)
+            scene_files_names = io.Manager(self.project_root).get_scene_files(client, project, job)
+            self.update_issued_tree(job)
+            self.update_master_tree(master_files_names)
+            self.update_scene_tree(scene_files_names)
 
-                master_files_names = folder.Manager(self.project_root).get_master_files(self.CLIENT, self.PROJECT, self.JOB)
-                scene_files_names = folder.Manager(self.project_root).get_scene_files(self.CLIENT, self.PROJECT, self.JOB)
-                self.update_issued_tree(self.JOB)
-                self.update_master_tree(master_files_names)
-                self.update_scene_tree(scene_files_names)
+            self.show(self.folder_shortcuts)
+            self.show(self.tabWidget)
 
-                return selection_name
+            return True
 
-            else:
-                self.PROJECT = selection_name
-                self.hide(self.folder_shortcuts)
-                self.hide(self.tabWidget)
+        else:
+            print('parent')
 
-        return False
+            self.hide(self.folder_shortcuts)
+            self.hide(self.tabWidget)
 
 
     def action_issued_tree_changed(self):
@@ -136,15 +128,34 @@ class Form(QObject):
                 job = self.project_tree.currentItem().text(0)
                 issue_folder = self.issued_tree.currentItem().parent().text(0)
 
-                issue_file_loc = folder.Manager(self.project_root).dir_from_root(
+                issue_file_loc = io.Manager(self.project_root).dir_from_root(
                     client, project, job, 'Support', 'Issued Information', 
                     issue_folder, self.issued_tree.currentItem().text(0)
                     )
 
-                folder.OsOpen(issue_file_loc).open()
+                io.OsOpen(issue_file_loc).open()
             
             else:
                 pass
+
+
+    def action_master_tree_changed(self):
+        client = self.client_list.currentItem().text()
+        job = self.project_tree.currentItem().text(0)
+
+        if self.project_tree.currentItem().parent():
+            project = self.project_tree.currentItem().parent().text(0)
+
+            master_file_loc = io.Manager(self.project_root).dir_from_root(
+                    client, project, job, 'Still & Film', 'Max Files', 
+                    'Still Imagery', 'Master', 
+                    self.master_list.currentItem().text()
+            )
+
+            io.OsOpen(master_file_loc).open()
+        
+        else:
+            pass
 
 
     def clicked_fs_ref(self):
@@ -152,10 +163,10 @@ class Form(QObject):
         project = self.project_tree.currentItem().parent().text(0)
         job = self.project_tree.currentItem().text(0)
 
-        ref_folder_dir = folder.Manager(self.project_root).dir_from_root(
+        ref_folder_dir = io.Manager(self.project_root).dir_from_root(
             client, project, job, 'Support', 'Reference Imagery'
         )
-        folder.OsOpen(ref_folder_dir).open()
+        io.OsOpen(ref_folder_dir).open()
 
 
     def clicked_fs_photography(self):
@@ -163,10 +174,10 @@ class Form(QObject):
         project = self.project_tree.currentItem().parent().text(0)
         job = self.project_tree.currentItem().text(0)
 
-        photography_loc = folder.Manager(self.project_root).dir_from_root(
+        photography_loc = io.Manager(self.project_root).dir_from_root(
             client, project, job, 'Support', 'Photography'
         )
-        folder.OsOpen(photography_loc).open()
+        io.OsOpen(photography_loc).open()
 
 
     def clicked_fs_render(self):
@@ -174,10 +185,19 @@ class Form(QObject):
         project = self.project_tree.currentItem().parent().text(0)
         job = self.project_tree.currentItem().text(0)
 
-        render_loc = folder.Manager(self.project_root).dir_from_root(
+        render_loc = io.Manager(self.project_root).dir_from_root(
             client, project, job, 'Still & Film', 'Renders'
         )
-        folder.OsOpen(render_loc).open()
+        io.OsOpen(render_loc).open()
+
+
+    # functions
+    def get_clients(self):
+        """appends list of clients to client_list"""
+        clients = io.Manager(self.project_root).get_clients()
+        
+        for client in clients:
+            self.client_list.addItem(client)
 
 
     def update_project_tree(self, client_name):
@@ -185,7 +205,7 @@ class Form(QObject):
         self.project_tree.clear()
         self.issued_tree.clear()
 
-        t = folder.Manager(self.project_root).get_projects_and_jobs(client_name)
+        t = io.Manager(self.project_root).get_projects_and_jobs(client_name)
 
         for key, value in t.items():
             root = QTreeWidgetItem(self.project_tree, [key])
@@ -201,34 +221,30 @@ class Form(QObject):
         """updates the issued tree, when a new project/job is selected"""
         self.issued_tree.clear()
 
-        client_name = self.client_list.currentItem().text()
-        t = folder.Manager(self.project_root).get_issues_files(client_name, self.PROJECT, job)
+        client = self.client_list.currentItem().text()
+        project = self.project_tree.currentItem().parent().text(0)
+        issues_dict = io.Manager(self.project_root).get_issues_files(client, project, job)
 
-        for key, value in t.items():
-            root = QTreeWidgetItem(self.issued_tree, [key])
+        for issue_folder, issues in issues_dict.items():
+            root = QTreeWidgetItem(self.issued_tree, [issue_folder])
 
-            if len(value) > 0:
-                for val in value:
+            if len(issues) > 0:
+                for val in issues:
                     item = QTreeWidgetItem([val])
                     root.addChild(item)
 
-        return True
-
 
     def update_master_tree(self, files):
-        self.master_tree.clear()
+        self.master_list.clear()
         for file in files:
-            self.master_tree.addItem(file)
-
-        return True
+            self.master_list.addItem(file)
 
 
     def update_scene_tree(self, files):
-        self.scene_tree.clear()
+        self.scene_list.clear()
         for file in files:
-            self.scene_tree.addItem(file)
+            self.scene_list.addItem(file)
 
-        return True
  
 
 if __name__ == '__main__':

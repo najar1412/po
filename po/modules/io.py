@@ -141,11 +141,6 @@ class OsOpen():
             os.startfile(self._dir)
 
 
-    def test(self):
-        print(self.location)
-        print('testing fine!')
-        
-
 # old, could be helpful code
 class ProjectMan():
     """tools built around default project structure"""
