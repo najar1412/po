@@ -113,8 +113,6 @@ class Form(QObject):
             return True
 
         else:
-            print('parent')
-
             self.hide(self.folder_shortcuts)
             self.hide(self.tabWidget)
 
@@ -249,5 +247,5 @@ class Form(QObject):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    form = Form('main.ui')
+    form = Form('main_res.ui')
     sys.exit(app.exec_())

@@ -46,6 +46,7 @@ class Manager():
             if os.path.isdir(f'{self.root}{client}'):
                 result.append(client)
 
+
         return sorted(result)
 
 
@@ -62,7 +63,7 @@ class Manager():
             project_dir = f'{client_dir}\\{project}'
             if os.path.isdir(project_dir):
                 projects_and_jobs[project] = [
-                    x for x in os.listdir(project_dir)
+                    x for x in os.listdir(project_dir) if os.path.isdir(f'{project_dir}\\{x}')
                 ]
 
         return projects_and_jobs
