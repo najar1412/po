@@ -10,6 +10,7 @@ import os
 class Manager():
     """tools built around default project structure.
     root: str: ..."""
+    # TODO: Imp pathlib throughout, for crossplatform (win, mac)
     def __init__(self, root):
         self.root = pathlib.Path(root)
 
@@ -23,12 +24,15 @@ class Manager():
         _str = ''
         for loc in args:
             _str = f'{_str}\\{loc}'
+            
         
         return _str
 
 
     def dir_from_root(self, *args):
-        return f'{self.root}{self._string_builder(args)}'
+        # TODO: self.root doesnt seem to be escaping \\
+        # slicing string as WORKAROUND.
+        return f'{str(self.root)[:-1]}{self._string_builder(args)}'
 
 
     def get_clients(self):
@@ -37,7 +41,7 @@ class Manager():
         # TODO: imp file, folder checking
         result = []
         clients = os.listdir(self.root)
-
+        
         for client in clients:
             if os.path.isdir(f'{self.root}{client}'):
                 result.append(client)
@@ -111,15 +115,31 @@ class Manager():
         return os.listdir(scene_folder_dir)
 
 
-class OpenFile():
+class OsOpen():
+    # TODO: use pathlib for crossplatform, (win, mac)
     def __init__(self, location):
         self.location = location
+        self._dir, self._filename = os.path.split(location)
+
+        if not os.path.isdir(os.path.split(location)[0]):
+            # TODO: raise error
+            print('path does not exist')
+        else:
+            self._dir = os.path.split(location)[0]
+
+        if not not os.path.isdir(os.path.split(location)[1]):
+            self._filename = None
+        else:
+            self._filename = os.path.split(location)[1]
+
 
     def open(self):
-        # TODO: catch the windows exception if file
-        # not found?
-        print(self.location)
-        os.system(f'start {self.location}')
+        """decides wether to open a file or directory"""
+        if self._filename:
+            os.startfile(f'{self._dir}\\{self._filename}')
+        else:
+            os.startfile(self._dir)
+
 
     def test(self):
         print(self.location)

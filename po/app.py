@@ -1,7 +1,10 @@
 import sys
  
 from PySide2.QtUiTools import QUiLoader
-from PySide2.QtWidgets import QApplication, QPushButton, QLineEdit, QListWidget, QTreeWidget, QTreeWidgetItem
+from PySide2.QtWidgets import (
+    QApplication, QPushButton, QLineEdit, QListWidget, QTreeWidget, 
+    QTreeWidgetItem, QGroupBox, QTabWidget, QPushButton
+)
 from PySide2.QtCore import QFile, QObject
 
 from modules import folder
@@ -26,7 +29,7 @@ class Form(QObject):
         ui_file.close()
 
         # globals
-        self.project_root = 'd:\\'
+        self.project_root = "d:\\"
         self.PROJECT = ''
         self.CLIENT = ''
         self.JOB = ''
@@ -38,15 +41,41 @@ class Form(QObject):
         self.issued_tree = self.window.findChild(QTreeWidget, 'issued_tree')
         self.master_tree = self.window.findChild(QListWidget, 'master_files')
         self.scene_tree = self.window.findChild(QListWidget, 'scene_files')
+        self.fs_ref = self.window.findChild(QPushButton, 'fs_ref')
+        self.fs_photography = self.window.findChild(QPushButton, 'fs_photography')
+        self.fs_artdirection = self.window.findChild(QPushButton, 'fs_artdirection')
+        self.fs_render = self.window.findChild(QPushButton, 'fs_render')
+
+        # groups
+        self.project_job_groupbox = self.window.findChild(QGroupBox, 'project_job_groupbox')
+        self.folder_shortcuts = self.window.findChild(QGroupBox, 'folder_shortcuts')
+        self.tabWidget = self.window.findChild(QTabWidget, 'tabWidget')
+
+        self.hide(self.project_job_groupbox)
+        self.hide(self.folder_shortcuts)
+        self.hide(self.tabWidget)
 
         # widget actions
         self.client_list.itemSelectionChanged.connect(self.action_client_list_changed)
         self.project_tree.itemSelectionChanged.connect(self.action_project_tree_changed)
         self.issued_tree.itemSelectionChanged.connect(self.action_issued_tree_changed)
+        self.fs_ref.clicked.connect(self.clicked_fs_ref)
+        self.fs_photography.clicked.connect(self.clicked_fs_photography)
+        self.fs_render.clicked.connect(self.clicked_fs_render)
 
-        # start up logic
+        # start up
         self.get_clients()
         self.window.show()
+
+
+    def hide(self, widget):
+        """hides a widget"""
+        widget.close()
+
+
+    def show(self, widget):
+        """shows a widget"""
+        widget.show()
 
 
     def get_clients(self):
@@ -60,6 +89,9 @@ class Form(QObject):
     def action_client_list_changed(self):
         """logic to run when user selects a Client"""
         self.project_tree.clear()
+        self.hide(self.folder_shortcuts)
+        self.hide(self.tabWidget)
+        self.show(self.project_job_groupbox)
         self.CLIENT = self.client_list.currentItem().text()
 
         return self.update_project_tree(self.CLIENT)
@@ -75,7 +107,10 @@ class Form(QObject):
             selection_name = project_selection[0].text(0)
 
             if selection_name not in projects:
+                self.show(self.folder_shortcuts)
+                self.show(self.tabWidget)
                 self.JOB = selection_name
+
                 master_files_names = folder.Manager(self.project_root).get_master_files(self.CLIENT, self.PROJECT, self.JOB)
                 scene_files_names = folder.Manager(self.project_root).get_scene_files(self.CLIENT, self.PROJECT, self.JOB)
                 self.update_issued_tree(self.JOB)
@@ -86,6 +121,8 @@ class Form(QObject):
 
             else:
                 self.PROJECT = selection_name
+                self.hide(self.folder_shortcuts)
+                self.hide(self.tabWidget)
 
         return False
 
@@ -96,17 +133,51 @@ class Form(QObject):
             project = self.project_tree.currentItem().parent().text(0)
 
             if self.issued_tree.currentItem().parent():
-                job = self.issued_tree.currentItem().parent().text(0)
+                job = self.project_tree.currentItem().text(0)
+                issue_folder = self.issued_tree.currentItem().parent().text(0)
 
-                lissue_file_loc = folder.Manager(self.project_root).dir_from_root(
+                issue_file_loc = folder.Manager(self.project_root).dir_from_root(
                     client, project, job, 'Support', 'Issued Information', 
-                    self.issued_tree.currentItem().text(0)
+                    issue_folder, self.issued_tree.currentItem().text(0)
                     )
 
-                folder.OpenFile(f'"{lissue_file_loc}"').open()
+                folder.OsOpen(issue_file_loc).open()
             
             else:
                 pass
+
+
+    def clicked_fs_ref(self):
+        client = self.client_list.currentItem().text()
+        project = self.project_tree.currentItem().parent().text(0)
+        job = self.project_tree.currentItem().text(0)
+
+        ref_folder_dir = folder.Manager(self.project_root).dir_from_root(
+            client, project, job, 'Support', 'Reference Imagery'
+        )
+        folder.OsOpen(ref_folder_dir).open()
+
+
+    def clicked_fs_photography(self):
+        client = self.client_list.currentItem().text()
+        project = self.project_tree.currentItem().parent().text(0)
+        job = self.project_tree.currentItem().text(0)
+
+        photography_loc = folder.Manager(self.project_root).dir_from_root(
+            client, project, job, 'Support', 'Photography'
+        )
+        folder.OsOpen(photography_loc).open()
+
+
+    def clicked_fs_render(self):
+        client = self.client_list.currentItem().text()
+        project = self.project_tree.currentItem().parent().text(0)
+        job = self.project_tree.currentItem().text(0)
+
+        render_loc = folder.Manager(self.project_root).dir_from_root(
+            client, project, job, 'Still & Film', 'Renders'
+        )
+        folder.OsOpen(render_loc).open()
 
 
     def update_project_tree(self, client_name):
