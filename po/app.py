@@ -28,7 +28,7 @@ class Form(QObject):
         ui_file.close()
 
         # globals
-        self.project_root = "d:\\"
+        self.project_root = "z:\\"
 
         # widgets
         self.client_list = self.window.findChild(QListWidget, 'client_list')
