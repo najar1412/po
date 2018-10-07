@@ -14,11 +14,22 @@ from modules import io
 # TODO: figure out how to check if the client..project..job file 
 # struture is correct?
 
+# user flow: open app, checks if projects drive is correct, presents client list/tools
+# data flow: open app, checks config if true load client list, if false offer user input
 
-class Form(QObject):
-    """qt form"""
-    def __init__(self, ui_file, parent=None):
-        super(Form, self).__init__(parent)
+
+class Config():
+    project_drive = 'd:\\'
+
+    def _update_project_drive(self, letter):
+        windows_req = ':\\'
+        self.project_drive = f'{letter}{windows_req}'
+
+        return self.project_drive
+
+
+class DefaultDialog(QObject):
+    def __init__(self, ui_file, config, parent=None):
 
         # settings
         ui_file = QFile(ui_file)
@@ -28,7 +39,44 @@ class Form(QObject):
         ui_file.close()
 
         # globals
-        self.project_root = "z:\\"
+        self.project_root = config.project_drive
+
+        self.pb_save = self.window.findChild(QPushButton, 'pb_save')
+        self.pb_discard = self.window.findChild(QPushButton, 'pb_discard')
+
+        self.le_client_name = self.window.findChild(QLineEdit, 'le_client_name')
+
+        self.pb_save.clicked.connect(self.clicked_pb_save)
+        self.pb_discard.clicked.connect(self.clicked_pb_discard)
+
+        self.window.show()
+
+    
+    def clicked_pb_save(self):
+        client_name = self.le_client_name.text()
+        io.Manager(self.project_root).create_folder(client_name)
+        self.window.close()
+
+    
+    def clicked_pb_discard(self):
+        self.window.close()
+
+
+class Form(QObject):
+    """qt form"""
+    def __init__(self, ui_file, config, parent=None):
+        super(Form, self).__init__(parent)
+
+        # settings
+        self.config = config
+        ui_file = QFile(ui_file)
+        ui_file.open(QFile.ReadOnly)
+        loader = QUiLoader()
+        self.window = loader.load(ui_file)
+        ui_file.close()
+
+        # globals
+        self.project_root = config.project_drive
 
         # widgets
         self.client_list = self.window.findChild(QListWidget, 'client_list')
@@ -40,14 +88,22 @@ class Form(QObject):
         self.fs_photography = self.window.findChild(QPushButton, 'fs_photography')
         self.fs_artdirection = self.window.findChild(QPushButton, 'fs_artdirection')
         self.fs_render = self.window.findChild(QPushButton, 'fs_render')
+        self.pb_project_drive = self.window.findChild(QPushButton, 'pb_project_drive')
+        self.le_project_drive = self.window.findChild(QLineEdit, 'le_project_drive')
+        self.le_project_drive.setPlaceholderText = self.project_root
+        self.pb_new_client = self.window.findChild(QPushButton, 'pb_new_client')
+        self.pb_refresh = self.window.findChild(QPushButton, 'pb_refresh')
+        self.pb_new_project = self.window.findChild(QPushButton, 'pb_new_project')
+        self.pb_new_job = self.window.findChild(QPushButton, 'pb_new_job')
+        
 
         # groups
         self.project_job_groupbox = self.window.findChild(QGroupBox, 'project_job_groupbox')
         self.hide(self.project_job_groupbox)
         self.folder_shortcuts = self.window.findChild(QGroupBox, 'folder_shortcuts')
         self.hide(self.folder_shortcuts)
-        self.tabWidget = self.window.findChild(QTabWidget, 'tabWidget')
-        self.hide(self.tabWidget)
+        self.gb_job_info = self.window.findChild(QGroupBox, 'gb_job_information')
+        self.hide(self.gb_job_info)
 
         # widget actions
         self.client_list.itemSelectionChanged.connect(self.action_client_list_changed)
@@ -57,6 +113,11 @@ class Form(QObject):
         self.fs_ref.clicked.connect(self.clicked_fs_ref)
         self.fs_photography.clicked.connect(self.clicked_fs_photography)
         self.fs_render.clicked.connect(self.clicked_fs_render)
+        self.pb_project_drive.clicked.connect(self.clicked_pb_project_drive)
+        self.pb_new_client.clicked.connect(self.clicked_pb_new_client)
+        self.pb_refresh.clicked.connect(self.clicked_pb_refresh)
+        self.pb_new_project.clicked.connect(self.clicked_pb_new_project)
+        self.pb_new_job.clicked.connect(self.clicked_pb_new_job)
 
         # start up
         self.get_clients()
@@ -82,7 +143,7 @@ class Form(QObject):
         client = self.client_list.currentItem().text()
 
         self.hide(self.folder_shortcuts)
-        self.hide(self.tabWidget)
+        self.hide(self.gb_job_info)
 
         self.show(self.project_job_groupbox)
 
@@ -108,13 +169,13 @@ class Form(QObject):
             self.update_scene_tree(scene_files_names)
 
             self.show(self.folder_shortcuts)
-            self.show(self.tabWidget)
+            self.show(self.gb_job_info)
 
             return True
 
         else:
             self.hide(self.folder_shortcuts)
-            self.hide(self.tabWidget)
+            self.hide(self.gb_job_info)
 
 
     def action_issued_tree_changed(self):
@@ -189,6 +250,41 @@ class Form(QObject):
         io.OsOpen(render_loc).open()
 
 
+    def clicked_pb_project_drive(self):
+        self.project_root = self.config._update_project_drive(self.le_project_drive.text())
+
+        self.client_list.clear()
+        self.hide(self.project_job_groupbox)
+        self.project_tree.clear()
+        
+        self.get_clients()
+
+
+    def clicked_pb_new_client(self):
+        # TODO: figure how to refresh the client list once a new folder has been added.
+        self.dialog = DefaultDialog('new_client_dialog.ui', default_config)
+        self.hide(self.project_job_groupbox)
+
+        self.get_clients()
+
+
+    def clicked_pb_refresh(self):
+        self.hide(self.project_job_groupbox)
+        self.project_tree.clear()
+        self.client_list.clear()
+
+        self.get_clients()
+        print('refreshing...')
+
+
+    def clicked_pb_new_project(self):
+        self.dialog = DefaultDialog('new_project_dialog.ui', default_config)
+
+
+    def clicked_pb_new_job(self):
+        self.dialog = DefaultDialog('new_job_dialog.ui', default_config)
+
+
     # functions
     def get_clients(self):
         """appends list of clients to client_list"""
@@ -196,6 +292,7 @@ class Form(QObject):
         
         for client in clients:
             self.client_list.addItem(client)
+
 
 
     def update_project_tree(self, client_name):
@@ -243,9 +340,16 @@ class Form(QObject):
         for file in files:
             self.scene_list.addItem(file)
 
- 
+
+
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    form = Form('main_res.ui')
-    sys.exit(app.exec_())
+    default_config = Config()
+
+    if default_config.project_drive:
+        app = QApplication(sys.argv)
+        main = Form('main_res.ui', default_config)
+        sys.exit(app.exec_())
+
+    else:
+        print('Error Starting application.')

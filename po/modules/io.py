@@ -1,6 +1,7 @@
 import pathlib
 import os
 
+
 # scan project dir
 # report directors over the standard windows dir length
 # make project folders
@@ -48,6 +49,17 @@ class Manager():
 
 
         return sorted(result)
+
+
+    def create_folder(self, folder_name):
+        project_drive = pathlib.Path(self.root)
+        if len(folder_name) > 0:
+            if project_drive.is_dir():
+                new_dir = project_drive / folder_name
+                if new_dir.is_dir():
+                    pass
+                else:
+                    new_dir.mkdir()
 
 
     def get_projects_and_jobs(self, client):
