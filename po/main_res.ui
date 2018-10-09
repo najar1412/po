@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>442</width>
-    <height>809</height>
+    <height>843</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -216,7 +216,7 @@
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>150</height>
+        <height>175</height>
        </size>
       </property>
       <property name="title">
@@ -452,7 +452,7 @@
              <enum>QTabWidget::Rounded</enum>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>3</number>
             </property>
             <property name="elideMode">
              <enum>Qt::ElideNone</enum>
@@ -480,31 +480,32 @@
                  <string>Tools</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_4">
+                 <property name="spacing">
+                  <number>0</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
                  <item>
                   <widget class="QPushButton" name="pushButton">
                    <property name="text">
-                    <string>PushButton</string>
+                    <string>Open Folder</string>
                    </property>
                   </widget>
                  </item>
                  <item>
                   <widget class="QPushButton" name="pushButton_2">
                    <property name="text">
-                    <string>PushButton</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_3">
-                   <property name="text">
-                    <string>PushButton</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_4">
-                   <property name="text">
-                    <string>PushButton</string>
+                    <string>New Issue</string>
                    </property>
                   </widget>
                  </item>
@@ -545,31 +546,39 @@
                  <string>Tools</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_2">
+                 <property name="spacing">
+                  <number>0</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
                  <item>
                   <widget class="QPushButton" name="pushButton_5">
                    <property name="text">
-                    <string>PushButton</string>
+                    <string>Open Folder</string>
                    </property>
                   </widget>
                  </item>
                  <item>
                   <widget class="QPushButton" name="pushButton_6">
                    <property name="text">
-                    <string>PushButton</string>
+                    <string>New Master</string>
                    </property>
                   </widget>
                  </item>
                  <item>
                   <widget class="QPushButton" name="pushButton_7">
                    <property name="text">
-                    <string>PushButton</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_8">
-                   <property name="text">
-                    <string>PushButton</string>
+                    <string>Collect Master</string>
                    </property>
                   </widget>
                  </item>
@@ -599,31 +608,39 @@
                  <string>Tools</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_3">
+                 <property name="spacing">
+                  <number>0</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
                  <item>
                   <widget class="QPushButton" name="pushButton_9">
                    <property name="text">
-                    <string>PushButton</string>
+                    <string>Open Folder</string>
                    </property>
                   </widget>
                  </item>
                  <item>
                   <widget class="QPushButton" name="pushButton_10">
                    <property name="text">
-                    <string>PushButton</string>
+                    <string>New Scene</string>
                    </property>
                   </widget>
                  </item>
                  <item>
                   <widget class="QPushButton" name="pushButton_11">
                    <property name="text">
-                    <string>PushButton</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_12">
-                   <property name="text">
-                    <string>PushButton</string>
+                    <string>Collect Scene</string>
                    </property>
                   </widget>
                  </item>

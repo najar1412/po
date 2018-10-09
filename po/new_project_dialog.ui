@@ -86,7 +86,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="comboBox"/>
+       <widget class="QComboBox" name="cb_client_list"/>
       </item>
      </layout>
     </item>

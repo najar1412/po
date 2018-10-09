@@ -3,7 +3,7 @@ import sys
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import (
     QApplication, QPushButton, QLineEdit, QListWidget, QTreeWidget, 
-    QTreeWidgetItem, QGroupBox, QTabWidget, QPushButton
+    QTreeWidgetItem, QGroupBox, QTabWidget, QPushButton, QComboBox
 )
 from PySide2.QtCore import QFile, QObject
 
@@ -19,7 +19,7 @@ from modules import io
 
 
 class Config():
-    project_drive = 'd:\\'
+    project_drive = 'z:\\'
 
     def _update_project_drive(self, letter):
         windows_req = ':\\'
@@ -28,26 +28,41 @@ class Config():
         return self.project_drive
 
 
-class DefaultDialog(QObject):
-    def __init__(self, ui_file, config, parent=None):
+class NewClientDialog(QObject):
+    def __init__(self, ui_file, config, clients=None, parent=None):
 
-        # settings
+        # UI
         ui_file = QFile(ui_file)
         ui_file.open(QFile.ReadOnly)
         loader = QUiLoader()
         self.window = loader.load(ui_file)
         ui_file.close()
 
+        if clients:
+            self.clients = clients
+
         # globals
         self.project_root = config.project_drive
 
+        # widgets
         self.pb_save = self.window.findChild(QPushButton, 'pb_save')
         self.pb_discard = self.window.findChild(QPushButton, 'pb_discard')
+        self.cb_client_list = self.window.findChild(QComboBox, 'cb_client_list')
 
         self.le_client_name = self.window.findChild(QLineEdit, 'le_client_name')
 
+        # actions
         self.pb_save.clicked.connect(self.clicked_pb_save)
         self.pb_discard.clicked.connect(self.clicked_pb_discard)
+
+        # mmm
+        if clients:
+            for client in clients['data']:
+                self.cb_client_list.addItem(client)
+                
+            client_index = self.cb_client_list.findText(clients['selected'])
+            if client_index >= 0:
+                self.cb_client_list.setCurrentIndex(client_index)
 
         self.window.show()
 
@@ -55,6 +70,107 @@ class DefaultDialog(QObject):
     def clicked_pb_save(self):
         client_name = self.le_client_name.text()
         io.Manager(self.project_root).create_folder(client_name)
+        self.window.close()
+
+    
+    def clicked_pb_discard(self):
+        self.window.close()
+
+
+class NewJobDialog(QObject):
+    def __init__(self, ui_file, config, clients=None, parent=None):
+
+        # UI
+        ui_file = QFile(ui_file)
+        ui_file.open(QFile.ReadOnly)
+        loader = QUiLoader()
+        self.window = loader.load(ui_file)
+        ui_file.close()
+
+        if clients:
+            self.clients = clients
+
+        # globals
+        self.project_root = config.project_drive
+
+        # widgets
+        self.pb_save = self.window.findChild(QPushButton, 'pb_save')
+        self.pb_discard = self.window.findChild(QPushButton, 'pb_discard')
+        self.cb_client_list = self.window.findChild(QComboBox, 'cb_client_list')
+
+        self.le_client_name = self.window.findChild(QLineEdit, 'le_client_name')
+
+        # actions
+        self.pb_save.clicked.connect(self.clicked_pb_save)
+        self.pb_discard.clicked.connect(self.clicked_pb_discard)
+
+        # mmm
+        if clients:
+            for client in clients['data']:
+                self.cb_client_list.addItem(client)
+                
+            client_index = self.cb_client_list.findText(clients['selected'])
+            if client_index >= 0:
+                self.cb_client_list.setCurrentIndex(client_index)
+
+        self.window.show()
+
+    
+    def clicked_pb_save(self):
+        client_name = self.le_client_name.text()
+        io.Manager(self.project_root).create_folder(client_name)
+        self.window.close()
+
+    
+    def clicked_pb_discard(self):
+        self.window.close()
+
+
+
+class NewProjectDialog(QObject):
+    def __init__(self, ui_file, config, clients=None, parent=None):
+
+        # UI
+        ui_file = QFile(ui_file)
+        ui_file.open(QFile.ReadOnly)
+        loader = QUiLoader()
+        self.window = loader.load(ui_file)
+        ui_file.close()
+
+        if clients:
+            self.clients = clients
+
+        # globals
+        self.project_root = config.project_drive
+
+        # widgets
+        self.pb_save = self.window.findChild(QPushButton, 'pb_save')
+        self.pb_discard = self.window.findChild(QPushButton, 'pb_discard')
+        self.cb_client_list = self.window.findChild(QComboBox, 'cb_client_list')
+
+        self.le_client_name = self.window.findChild(QLineEdit, 'le_client_name')
+
+        # actions
+        self.pb_save.clicked.connect(self.clicked_pb_save)
+        self.pb_discard.clicked.connect(self.clicked_pb_discard)
+
+        # mmm
+        if clients:
+            for client in clients['data']:
+                self.cb_client_list.addItem(client)
+                
+            client_index = self.cb_client_list.findText(clients['selected'])
+            if client_index >= 0:
+                self.cb_client_list.setCurrentIndex(client_index)
+
+        self.window.show()
+
+    
+    def clicked_pb_save(self):
+        """
+        client_name = self.le_client_name.text()
+        io.Manager(self.project_root).create_folder(client_name)
+        """
         self.window.close()
 
     
@@ -146,6 +262,7 @@ class Form(QObject):
         self.hide(self.gb_job_info)
 
         self.show(self.project_job_groupbox)
+        self.hide(self.pb_new_job)
 
         return self.update_project_tree(client)
 
@@ -157,6 +274,7 @@ class Form(QObject):
         self.issued_tree.clear()
 
         client = self.client_list.currentItem().text()
+        self.show(self.pb_new_job)
         
         if self.project_tree.currentItem().parent():
             project = self.project_tree.currentItem().parent().text(0)
@@ -262,8 +380,10 @@ class Form(QObject):
 
     def clicked_pb_new_client(self):
         # TODO: figure how to refresh the client list once a new folder has been added.
-        self.dialog = DefaultDialog('new_client_dialog.ui', default_config)
+        self.dialog = NewClientDialog('new_client_dialog.ui', default_config)
         self.hide(self.project_job_groupbox)
+        self.hide(self.folder_shortcuts)
+        self.hide(self.gb_job_info)
 
         self.get_clients()
 
@@ -278,11 +398,18 @@ class Form(QObject):
 
 
     def clicked_pb_new_project(self):
-        self.dialog = DefaultDialog('new_project_dialog.ui', default_config)
+        clients = io.Manager(self.project_root).get_clients()
+        selected_client = self.client_list.currentItem().text()
+        clients = {
+            'selected': selected_client, 
+            'data': clients
+        }
+
+        self.dialog = NewProjectDialog('new_project_dialog.ui', default_config, clients=clients)
 
 
     def clicked_pb_new_job(self):
-        self.dialog = DefaultDialog('new_job_dialog.ui', default_config)
+        self.dialog = NewJobDialog('new_job_dialog.ui', default_config)
 
 
     # functions
@@ -292,7 +419,6 @@ class Form(QObject):
         
         for client in clients:
             self.client_list.addItem(client)
-
 
 
     def update_project_tree(self, client_name):
