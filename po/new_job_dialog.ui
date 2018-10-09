@@ -115,7 +115,7 @@
       <item>
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Job Name:      </string>
+         <string>Job Name:          </string>
         </property>
        </widget>
       </item>
