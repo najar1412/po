@@ -126,7 +126,6 @@ class NewJobDialog(QObject):
         self.window.close()
 
 
-
 class NewProjectDialog(QObject):
     def __init__(self, ui_file, config, clients=None, parent=None):
 
@@ -211,6 +210,7 @@ class Form(QObject):
         self.pb_refresh = self.window.findChild(QPushButton, 'pb_refresh')
         self.pb_new_project = self.window.findChild(QPushButton, 'pb_new_project')
         self.pb_new_job = self.window.findChild(QPushButton, 'pb_new_job')
+        self.pb_deliver = self.window.findChild(QPushButton, 'pb_deliver')
         
 
         # groups
@@ -234,6 +234,7 @@ class Form(QObject):
         self.pb_refresh.clicked.connect(self.clicked_pb_refresh)
         self.pb_new_project.clicked.connect(self.clicked_pb_new_project)
         self.pb_new_job.clicked.connect(self.clicked_pb_new_job)
+        self.pb_deliver.clicked.connect(self.clicked_pb_deliver)
 
         # start up
         self.get_clients()
@@ -410,6 +411,18 @@ class Form(QObject):
 
     def clicked_pb_new_job(self):
         self.dialog = NewJobDialog('new_job_dialog.ui', default_config)
+
+
+    def clicked_pb_deliver(self):
+        client = self.client_list.currentItem().text()
+        project = self.project_tree.currentItem().parent().text(0)
+        job = self.project_tree.currentItem().text(0)
+
+        deliver_loc = io.Manager(self.project_root).dir_from_root(
+            client, project, job, 'Deliverables'
+        )
+        io.OsOpen(deliver_loc).open()
+
 
 
     # functions
