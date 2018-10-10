@@ -52,6 +52,8 @@ class Manager():
 
 
     def create_folder(self, folder_name):
+        """creates all folders that dont exist in folder_name"""
+        # TODO: refactor to self.create_path
         project_drive = pathlib.Path(self.root)
         if len(folder_name) > 0:
             if project_drive.is_dir():
@@ -60,6 +62,13 @@ class Manager():
                     pass
                 else:
                     new_dir.mkdir()
+
+
+    def create_path(self, string_path):
+        """creates all folders that dont exist in folder_name
+        string_path: str repr of path, sep with double forward slash"""
+        path = pathlib.Path(self.root, string_path)
+        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
 
     def get_projects_and_jobs(self, client):

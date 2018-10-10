@@ -100,7 +100,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit">
+       <widget class="QLineEdit" name="le_project_code">
         <property name="text">
          <string>VH</string>
         </property>
@@ -114,7 +114,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_2">
+       <widget class="QLineEdit" name="le_project_iter">
         <property name="text">
          <string>001</string>
         </property>
@@ -132,7 +132,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_3">
+       <widget class="QLineEdit" name="le_project_name">
         <property name="text">
          <string>54 Thompson Street</string>
         </property>
@@ -153,7 +153,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_4">
+       <widget class="QLineEdit" name="le_project_loc">
         <property name="text">
          <string>NY</string>
         </property>

@@ -146,8 +146,11 @@ class NewProjectDialog(QObject):
         self.pb_save = self.window.findChild(QPushButton, 'pb_save')
         self.pb_discard = self.window.findChild(QPushButton, 'pb_discard')
         self.cb_client_list = self.window.findChild(QComboBox, 'cb_client_list')
+        self.le_project_code = self.window.findChild(QLineEdit, 'le_project_code')
+        self.le_project_iter = self.window.findChild(QLineEdit, 'le_project_iter')
+        self.le_project_name = self.window.findChild(QLineEdit, 'le_project_name')
+        self.le_project_loc = self.window.findChild(QLineEdit, 'le_project_loc')
 
-        self.le_client_name = self.window.findChild(QLineEdit, 'le_client_name')
 
         # actions
         self.pb_save.clicked.connect(self.clicked_pb_save)
@@ -166,10 +169,21 @@ class NewProjectDialog(QObject):
 
     
     def clicked_pb_save(self):
+        # TODO: refresh project_job_list after adding a new project
         """
         client_name = self.le_client_name.text()
         io.Manager(self.project_root).create_folder(client_name)
         """
+        data = {
+            'client': self.cb_client_list.currentText(),
+            'project_code': [self.le_project_code.text(), self.le_project_iter.text()],
+            'project_name': self.le_project_name.text(),
+            'project_loc': self.le_project_loc.text()
+        }
+
+        path = f"{data['client']}//{data['project_code'][0]}{data['project_code'][1]}-{data['project_name']},{data['project_loc']}"
+        io.Manager(self.project_root).create_path(path)
+
         self.window.close()
 
     
@@ -211,7 +225,6 @@ class Form(QObject):
         self.pb_new_project = self.window.findChild(QPushButton, 'pb_new_project')
         self.pb_new_job = self.window.findChild(QPushButton, 'pb_new_job')
         self.pb_deliver = self.window.findChild(QPushButton, 'pb_deliver')
-        
 
         # groups
         self.project_job_groupbox = self.window.findChild(QGroupBox, 'project_job_groupbox')
