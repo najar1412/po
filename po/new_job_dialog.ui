@@ -86,7 +86,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="comboBox"/>
+       <widget class="QComboBox" name="cb_client_list"/>
       </item>
      </layout>
     </item>
@@ -106,7 +106,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="comboBox_2"/>
+       <widget class="QComboBox" name="cb_project_list"/>
       </item>
      </layout>
     </item>
@@ -120,7 +120,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_5">
+       <widget class="QLineEdit" name="le_job_number">
         <property name="text">
          <string>001</string>
         </property>
@@ -141,7 +141,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_4">
+       <widget class="QLineEdit" name="le_job_desc">
         <property name="text">
          <string>Interior 360 Interactives</string>
         </property>

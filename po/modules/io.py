@@ -51,6 +51,22 @@ class Manager():
         return sorted(result)
 
 
+    def get_projects(self, client):
+        """get all projects under client.
+        AUG:
+        client: str: client name.
+        Return: list: ['project', 'project', 'project', ]"""
+        # TODO: imp file, folder checking
+        result = []
+        projects = pathlib.Path(self.root, client)
+        
+        for item in os.listdir(projects):
+            if pathlib.Path(projects, item).is_dir():
+                result.append(item)
+
+        return result
+
+
     def create_folder(self, folder_name):
         """creates all folders that dont exist in folder_name"""
         # TODO: refactor to self.create_path

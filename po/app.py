@@ -78,7 +78,7 @@ class NewClientDialog(QObject):
 
 
 class NewJobDialog(QObject):
-    def __init__(self, ui_file, config, clients=None, parent=None):
+    def __init__(self, ui_file, config, clients=None, projects=None, parent=None):
 
         # UI
         ui_file = QFile(ui_file)
@@ -90,6 +90,9 @@ class NewJobDialog(QObject):
         if clients:
             self.clients = clients
 
+        if projects:
+            self.projects = projects
+
         # globals
         self.project_root = config.project_drive
 
@@ -97,14 +100,15 @@ class NewJobDialog(QObject):
         self.pb_save = self.window.findChild(QPushButton, 'pb_save')
         self.pb_discard = self.window.findChild(QPushButton, 'pb_discard')
         self.cb_client_list = self.window.findChild(QComboBox, 'cb_client_list')
-
-        self.le_client_name = self.window.findChild(QLineEdit, 'le_client_name')
+        self.cb_project_list = self.window.findChild(QComboBox, 'cb_project_list')
+        self.le_job_number = self.window.findChild(QLineEdit, 'le_job_number')
+        self.le_job_desc = self.window.findChild(QLineEdit, 'le_job_desc')
 
         # actions
         self.pb_save.clicked.connect(self.clicked_pb_save)
         self.pb_discard.clicked.connect(self.clicked_pb_discard)
 
-        # mmm
+        # populate
         if clients:
             for client in clients['data']:
                 self.cb_client_list.addItem(client)
@@ -113,12 +117,31 @@ class NewJobDialog(QObject):
             if client_index >= 0:
                 self.cb_client_list.setCurrentIndex(client_index)
 
+        if projects:
+            for project in projects['data']:
+                self.cb_project_list.addItem(project)
+                
+            project_index = self.cb_project_list.findText(projects['selected'])
+            if project_index >= 0:
+                self.cb_project_list.setCurrentIndex(project_index)
+
         self.window.show()
 
     
     def clicked_pb_save(self):
-        client_name = self.le_client_name.text()
-        io.Manager(self.project_root).create_folder(client_name)
+        # client_name = self.le_client_name.text()
+
+        data = {
+            'client': self.cb_client_list.currentText(),
+            'project': self.cb_project_list.currentText(),
+            'job_number': self.le_job_number.text(),
+            'job_desc': self.le_job_desc.text()
+        }
+
+        print(data)
+
+        # io.Manager(self.project_root).create_folder(client_name)
+
         self.window.close()
 
     
@@ -170,10 +193,6 @@ class NewProjectDialog(QObject):
     
     def clicked_pb_save(self):
         # TODO: refresh project_job_list after adding a new project
-        """
-        client_name = self.le_client_name.text()
-        io.Manager(self.project_root).create_folder(client_name)
-        """
         data = {
             'client': self.cb_client_list.currentText(),
             'project_code': [self.le_project_code.text(), self.le_project_iter.text()],
@@ -423,7 +442,27 @@ class Form(QObject):
 
 
     def clicked_pb_new_job(self):
-        self.dialog = NewJobDialog('new_job_dialog.ui', default_config)
+        clients = {
+            'selected': self.client_list.currentItem().text(), 
+            'data': io.Manager(self.project_root).get_clients()
+        }
+
+        projects = {'selected': '', 'data': ''}
+
+        if self.project_tree.currentItem().parent():
+            selected = self.project_tree.currentItem().parent().text(0)
+            projects['selected'] = selected
+            projects['data'] = io.Manager(self.project_root).get_projects(clients['selected'])
+
+        else:
+            selected = self.project_tree.currentItem().text(0)
+            projects['selected'] = selected
+            projects['data'] = io.Manager(self.project_root).get_projects(clients['selected'])
+
+        print(projects)
+
+
+        self.dialog = NewJobDialog('new_job_dialog.ui', default_config, clients=clients, projects=projects)
 
 
     def clicked_pb_deliver(self):
