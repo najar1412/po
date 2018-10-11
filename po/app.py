@@ -78,8 +78,10 @@ class NewClientDialog(QObject):
 
 
 class NewJobDialog(QObject):
+    # TODO: if user changes client during making a new job, the 
+    # project list should update to the new client
+    # TODO: on creating a new job strut projects window needs to refresh
     def __init__(self, ui_file, config, clients=None, projects=None, parent=None):
-
         # UI
         ui_file = QFile(ui_file)
         ui_file.open(QFile.ReadOnly)
@@ -138,8 +140,7 @@ class NewJobDialog(QObject):
             'job_desc': self.le_job_desc.text()
         }
 
-        t = folder.build_job(self.project_root, data['client'], data['project'], f"JC001-{data['job_number']}-{data['job_desc']}")
-        print(t)
+        folder.build_job(self.project_root, data['client'], data['project'], f"JC001-{data['job_number']}-{data['job_desc']}")
 
         # io.Manager(self.project_root).create_folder(client_name)
 
