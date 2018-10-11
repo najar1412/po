@@ -122,7 +122,7 @@
       <item>
        <widget class="QLineEdit" name="le_job_number">
         <property name="text">
-         <string>001</string>
+         <string>01</string>
         </property>
        </widget>
       </item>

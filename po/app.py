@@ -7,7 +7,7 @@ from PySide2.QtWidgets import (
 )
 from PySide2.QtCore import QFile, QObject
 
-from modules import io
+from modules import io, folder
  
 
 # TODO: figure out multiple forms? settings form for instance
@@ -138,7 +138,8 @@ class NewJobDialog(QObject):
             'job_desc': self.le_job_desc.text()
         }
 
-        print(data)
+        t = folder.build_job(self.project_root, data['client'], data['project'], f"JC001-{data['job_number']}-{data['job_desc']}")
+        print(t)
 
         # io.Manager(self.project_root).create_folder(client_name)
 
@@ -458,9 +459,6 @@ class Form(QObject):
             selected = self.project_tree.currentItem().text(0)
             projects['selected'] = selected
             projects['data'] = io.Manager(self.project_root).get_projects(clients['selected'])
-
-        print(projects)
-
 
         self.dialog = NewJobDialog('new_job_dialog.ui', default_config, clients=clients, projects=projects)
 
