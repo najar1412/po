@@ -13,7 +13,7 @@
     <x>0</x>
     <y>0</y>
     <width>442</width>
-    <height>850</height>
+    <height>852</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Projects Overview beta 0.01</string>
+   <string>Projects Overview 2019.01</string>
   </property>
   <property name="windowOpacity">
    <double>0.990000000000000</double>
@@ -76,6 +76,12 @@
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_6">
        <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
         <number>0</number>
        </property>
        <item>
@@ -704,11 +710,10 @@
    </property>
    <widget class="QMenu" name="m_menu">
     <property name="title">
-     <string>Menu</string>
+     <string>Tools</string>
     </property>
     <addaction name="settings"/>
     <addaction name="actiontest_2"/>
-    <addaction name="actiontest_3"/>
    </widget>
    <addaction name="m_menu"/>
   </widget>
@@ -720,7 +725,7 @@
   </action>
   <action name="actiontest_2">
    <property name="text">
-    <string>test</string>
+    <string>Project Checker</string>
    </property>
   </action>
   <action name="actiontest_3">
