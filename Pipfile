@@ -7,6 +7,8 @@ name = "pypi"
 "pyside2" = "*"
 "pyqt5-tools" = "*"
 pylint = "*"
+pyinstaller = "*"
+"shiboken2" = "*"
 
 [dev-packages]
 pylint = "*"
