@@ -349,7 +349,7 @@
          <item>
           <widget class="QPushButton" name="fs_ref">
            <property name="text">
-            <string>Referance</string>
+            <string>Reference</string>
            </property>
           </widget>
          </item>
@@ -508,13 +508,6 @@
                    </property>
                   </widget>
                  </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_2">
-                   <property name="text">
-                    <string>New Issue</string>
-                   </property>
-                  </widget>
-                 </item>
                 </layout>
                </widget>
               </item>
@@ -575,13 +568,6 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="pushButton_6">
-                   <property name="text">
-                    <string>New Master</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
                   <widget class="QPushButton" name="pushButton_7">
                    <property name="text">
                     <string>Collect Master</string>
@@ -633,13 +619,6 @@
                   <widget class="QPushButton" name="pushButton_9">
                    <property name="text">
                     <string>Open Folder</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_10">
-                   <property name="text">
-                    <string>New Scene</string>
                    </property>
                   </widget>
                  </item>

@@ -1,31 +1,45 @@
 __author__ = 'Rory Jarrel'
 __version__ = '2019.0.1'
 
-# TODO: figure out multiple forms? settings form for instance
-# TODO: figure out how to check if the client..project..job file 
-# struture is correct?
+# TODO: is folder struture is correct?
+# TODO: after creating a new client, project, job. Select the newly creted 
+# thing.
 
 import sys
+import os
  
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import (
     QApplication, QPushButton, QLineEdit, QListWidget, QTreeWidget, 
     QTreeWidgetItem, QGroupBox, QTabWidget, QPushButton, QComboBox,
-    QAction, QMenu, QVBoxLayout
+    QAction, QMenu, QVBoxLayout, QSystemTrayIcon
 )
 from PySide2.QtCore import QFile, QObject
-# below import is for pyinstaller to know where the module is...
+from PySide2.QtGui import QIcon
+#  WORKAROUND: below import is for pyinstaller to know where the module is.
+# isnt actually used...
 from PySide2.QtXml import QDomNode
 
 from modules import io, folder, project_scanner
- 
 
-# user flow: open app, checks if projects drive is correct, presents client list/tools
-# data flow: open app, checks config if true load client list, if false offer user input
+# Used for location UIs and other graphics. _MEIPASS will only be in `sys`
+# the app has been packaged using `pyinstaller _app.spec`
+if hasattr(sys, '_MEIPASS'):
+    main_res = os.path.join(sys._MEIPASS, "main_res.ui")
+    new_client_dialog = os.path.join(sys._MEIPASS, "new_client_dialog.ui")
+    new_job_dialog = os.path.join(sys._MEIPASS, "new_job_dialog.ui")
+    new_project_dialog = os.path.join(sys._MEIPASS, "new_project_dialog.ui")
+    project_checker_dialog = os.path.join(sys._MEIPASS, "project_checker_dialog.ui")
+    heart_artwork = os.path.join(sys._MEIPASS, "heart.png")
+else:
+    main_res = "D:\code\po\po\\main_res.ui"
+    new_client_dialog = "D:\code\po\po\\new_client_dialog.ui"
+    new_job_dialog = "D:\code\po\po\\new_job_dialog.ui"
+    new_project_dialog = "D:\code\po\po\\new_project_dialog.ui"
+    project_checker_dialog = "D:\code\po\po\\project_checker_dialog.ui"
+    heart_artwork = "D:\code\po\po\\artwork\heart.png"
 
-# GLOBALS
-UI_LOCATION = 'D:\code\po\po\\'
-
+# CONFIG
 class Config():
     def __init__(self):
         self.project_drive = 'z:\\'
@@ -42,8 +56,54 @@ class Config():
         return self.project_drive
 
 
+# HELPERS
+class Helpers():
+    """Collection of helper functions, usually used for passing widgets between 
+    dialogs"""
+    def __init__(self, widgets=None, data=None):
+        if widgets and 'hide' in widgets:
+            self.hide_widgets = widgets['hide']
+        else:
+            self.hide_widgets = None
+        if widgets and 'clear' in widgets:
+            self.clear_widgets = widgets['clear']
+        else:
+            self.clear_widgets = None
+        if data:
+            self.data = data
+        else:
+            self.data = None
+        
+        
+    def window_refresh(self):
+        """hides and clears any number widgets and re-populates.
+
+        self.data is used to populate cleared widgets, accepts a list:
+        First element is the function to call to populate.
+        Second element is any augment used to call the function.
+
+            i.e. update_project_tree function needs a client name in order
+                to populate."""
+        if self.hide_widgets:
+            for widget in self.hide_widgets:
+                widget.hide()
+        if self.clear_widgets:
+            for widget in self.clear_widgets:
+                widget.clear()
+        if self.data:
+            if len(self.data) > 1:
+                func = self.data[0]
+                func(self.data[1])
+            else:
+                func = self.data[0]
+                func()
+
+        return True
+
+
+# DIALOGS
 class NewClientDialog(QObject):
-    def __init__(self, ui_file, config, clients=None, parent=None):
+    def __init__(self, ui_file, config, clients=None, parent=None, helper=None):
 
         # globals
         self.project_root = config.project_drive
@@ -57,6 +117,8 @@ class NewClientDialog(QObject):
 
         if clients:
             self.clients = clients
+        if helper:
+            self.helper = helper
 
         # widgets
         self.pb_save = self.window.findChild(QPushButton, 'pb_save')
@@ -84,7 +146,9 @@ class NewClientDialog(QObject):
     def clicked_pb_save(self):
         client_name = self.le_client_name.text()
         io.Manager(self.project_root).create_folder(client_name)
+
         self.window.close()
+        self.helper.window_refresh()
 
     
     def clicked_pb_discard(self):
@@ -120,14 +184,11 @@ class ProjectCheckerDialog(QObject):
     # action functions
     def clicked_le_project_scan(self):
         # TODO: refresh project_job_list after adding a new project
-        # project_scanner.runner()
         projects = project_scanner.get_folders(self.config.fetch_drive())
         for project in projects:
             bad_project = project_scanner.run_report(project)
             if bad_project:
                 self.update_project_checker_tree(bad_project)
-
-        # self.window.close()
 
 
     def action_project_tree_changed(self):
@@ -158,7 +219,7 @@ class NewJobDialog(QObject):
     # TODO: if user changes client during making a new job, the 
     # project list should update to the new client
     # TODO: on creating a new job strut projects window needs to refresh
-    def __init__(self, ui_file, config, clients=None, projects=None, parent=None):
+    def __init__(self, ui_file, config, clients=None, projects=None, parent=None, helper=None):
         # UI
         ui_file = QFile(ui_file)
         ui_file.open(QFile.ReadOnly)
@@ -174,6 +235,8 @@ class NewJobDialog(QObject):
 
         # globals
         self.project_root = config.project_drive
+        if helper:
+            self.helper = helper
 
         # widgets
         self.pb_save = self.window.findChild(QPushButton, 'pb_save')
@@ -222,6 +285,7 @@ class NewJobDialog(QObject):
         # io.Manager(self.project_root).create_folder(client_name)
 
         self.window.close()
+        self.helper.window_refresh()
 
     
     def clicked_pb_discard(self):
@@ -229,7 +293,7 @@ class NewJobDialog(QObject):
 
 
 class NewProjectDialog(QObject):
-    def __init__(self, ui_file, config, clients=None, parent=None):
+    def __init__(self, ui_file, config, clients=None, parent=None, helper=None):
 
         # UI
         ui_file = QFile(ui_file)
@@ -243,6 +307,8 @@ class NewProjectDialog(QObject):
 
         # globals
         self.project_root = config.project_drive
+        if helper:
+            self.helper = helper
 
         # widgets
         self.pb_save = self.window.findChild(QPushButton, 'pb_save')
@@ -283,16 +349,17 @@ class NewProjectDialog(QObject):
         io.Manager(self.project_root).create_path(path)
 
         self.window.close()
+        self.helper.window_refresh()
 
     
     def clicked_pb_discard(self):
         self.window.close()
 
 
-class Form(QObject):
+class MainWindow(QObject):
     """qt form"""
     def __init__(self, ui_file, config, parent=None):
-        super(Form, self).__init__(parent)
+        super(MainWindow, self).__init__(parent)
 
         # settings
         self.config = config
@@ -494,12 +561,10 @@ class Form(QObject):
 
     def clicked_pb_new_client(self):
         # TODO: figure how to refresh the client list once a new folder has been added.
-        self.dialog = NewClientDialog(f'{UI_LOCATION}new_client_dialog.ui', default_config)
-        self.hide(self.project_job_groupbox)
-        self.hide(self.folder_shortcuts)
-        self.hide(self.gb_job_info)
+        widgets = {'hide': [self.project_job_groupbox], 'clear': [self.project_tree, self.client_list]}
+        helper = Helpers(widgets=widgets, data=[self.get_clients])
 
-        self.get_clients()
+        self.dialog = NewClientDialog(new_client_dialog, default_config, helper=helper)
 
 
     def clicked_pb_refresh(self):
@@ -519,8 +584,9 @@ class Form(QObject):
             'data': clients
         }
 
-        self.dialog = NewProjectDialog(f'{UI_LOCATION}new_project_dialog.ui', default_config, clients=clients)
-        print('new project on exit')
+        helper = Helpers(data=[self.update_project_tree, selected_client])
+
+        self.dialog = NewProjectDialog(new_project_dialog, default_config, clients=clients, helper=helper)
 
 
     def clicked_pb_new_job(self):
@@ -541,11 +607,13 @@ class Form(QObject):
             projects['selected'] = selected
             projects['data'] = io.Manager(self.project_root).get_projects(clients['selected'])
 
-        self.dialog = NewJobDialog(f'{UI_LOCATION}new_job_dialog.ui', default_config, clients=clients, projects=projects)
+        helper = Helpers(data=[self.update_project_tree, clients['selected']])
+
+        self.dialog = NewJobDialog(new_job_dialog, default_config, clients=clients, projects=projects, helper=helper)
 
 
     def clicked_menu_project_checker(self):
-        self.dialog = ProjectCheckerDialog(f'{UI_LOCATION}project_checker_dialog.ui', default_config)
+        self.dialog = ProjectCheckerDialog(project_checker_dialog, default_config)
 
 
     def clicked_pb_deliver(self):
@@ -619,7 +687,25 @@ if __name__ == '__main__':
 
     if default_config.project_drive:
         app = QApplication(sys.argv)
-        main = Form(f'{UI_LOCATION}main_res.ui', default_config)
+        app.setQuitOnLastWindowClosed(False)
+        main = MainWindow(main_res, default_config)
+
+        # Create the icon
+        icon = QIcon(heart_artwork)
+
+        # Create the tray
+        tray = QSystemTrayIcon()
+        tray.setIcon(icon)
+        tray.setVisible(True)
+
+        menu = QMenu()
+        exit_action = QAction("Exit")
+        exit_action.triggered.connect(app.instance().quit)
+
+        menu.addAction(exit_action)
+
+        tray.setContextMenu(menu)
+
         sys.exit(app.exec_())
 
     else:
