@@ -12,7 +12,7 @@ from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import (
     QApplication, QPushButton, QLineEdit, QListWidget, QTreeWidget, 
     QTreeWidgetItem, QGroupBox, QTabWidget, QPushButton, QComboBox,
-    QAction, QMenu, QVBoxLayout, QSystemTrayIcon
+    QAction, QMenu, QVBoxLayout, QSystemTrayIcon, QFileDialog, QListWidgetItem
 )
 from PySide2.QtCore import QFile, QObject
 from PySide2.QtGui import QIcon
@@ -20,7 +20,8 @@ from PySide2.QtGui import QIcon
 # isnt actually used...
 from PySide2.QtXml import QDomNode
 
-from modules import io, folder, project_scanner
+from modules import io, folder, project_scanner, aws
+
 
 # Used for location UIs and other graphics. _MEIPASS will only be in `sys`
 # the app has been packaged using `pyinstaller _app.spec`
@@ -30,6 +31,9 @@ if hasattr(sys, '_MEIPASS'):
     new_job_dialog = os.path.join(sys._MEIPASS, "new_job_dialog.ui")
     new_project_dialog = os.path.join(sys._MEIPASS, "new_project_dialog.ui")
     project_checker_dialog = os.path.join(sys._MEIPASS, "project_checker_dialog.ui")
+    settings_dialog = os.path.join(sys._MEIPASS, "settings_dialog.ui")
+    project_upload_dialog = os.path.join(sys._MEIPASS, "project_upload_dialog.ui")
+
     heart_artwork = os.path.join(sys._MEIPASS, "heart.png")
 else:
     main_res = "D:\code\po\po\\main_res.ui"
@@ -37,6 +41,9 @@ else:
     new_job_dialog = "D:\code\po\po\\new_job_dialog.ui"
     new_project_dialog = "D:\code\po\po\\new_project_dialog.ui"
     project_checker_dialog = "D:\code\po\po\\project_checker_dialog.ui"
+    settings_dialog = "D:\code\po\po\\settings_dialog.ui"
+    project_upload_dialog = "D:\code\po\po\\project_upload_dialog.ui"
+
     heart_artwork = "D:\code\po\po\\artwork\heart.png"
 
 # CONFIG
@@ -57,6 +64,7 @@ class Config():
 
 
 # HELPERS
+OFFICES = {'New York': 'nyarchive', 'London': '', 'Los Angeles': ''}
 class Helpers():
     """Collection of helper functions, usually used for passing widgets between 
     dialogs"""
@@ -100,6 +108,10 @@ class Helpers():
 
         return True
 
+
+def bg_thread():
+    # TODO: imp new thread for running tasks in cmd, in the BG.
+    return False
 
 # DIALOGS
 class NewClientDialog(QObject):
@@ -356,6 +368,91 @@ class NewProjectDialog(QObject):
         self.window.close()
 
 
+class SettingsDialog(QObject):
+    def __init__(self, ui_file, config, clients=None, parent=None, helper=None):
+
+        # UI
+        ui_file = QFile(ui_file)
+        ui_file.open(QFile.ReadOnly)
+        loader = QUiLoader()
+        self.window = loader.load(ui_file)
+        ui_file.close()
+
+        self.window.show()
+
+
+class ProjectUploadDialog(QObject):
+    # TODO: Disable upload button until Project folder and selected office have
+    # been done.
+    def __init__(self, ui_file, config, clients=None, parent=None, helper=None):
+        # UI
+        ui_file = QFile(ui_file)
+        ui_file.open(QFile.ReadOnly)
+        loader = QUiLoader()
+        self.window = loader.load(ui_file)
+        ui_file.close()
+
+        self.project_dir = 'Select a Project Folder...'
+        self.bucket = None
+
+        # widgets
+        self.pb_upload_archive = self.window.findChild(QPushButton, 'pb_uploadArchive')
+        self.pb_select_dir = self.window.findChild(QPushButton, 'pb_selectDir')
+        self.le_project_folder = self.window.findChild(QLineEdit, 'le_project_folder')
+        self.cb_office = self.window.findChild(QComboBox, 'cb_office')
+        self.gb_files_to_upload = self.window.findChild(QGroupBox, 'gb_filesToUpload')
+        self.gb_files_to_upload.hide()
+        self.lw_files_to_upload = self.window.findChild(QListWidget, 'lw_filesToUpload')
+
+        # Widget Defaults
+        self.le_project_folder.setText(self.project_dir)
+
+        # actions
+        self.pb_upload_archive.clicked.connect(self.clicked_pb_upload_archive)
+        self.pb_select_dir.clicked.connect(self.clicked_pb_select_dir)
+        self.cb_office.activated.connect(self.clicked_cb_office)
+
+        self.window.show()
+
+    # HELPERS
+    def get_archives(self):
+        archives = []
+        for f in os.listdir(self.project_dir):
+            if os.path.splitext(f)[1] == '.zip' or os.path.splitext(f)[1] == '.rar':
+                archives.append(f)
+
+        return archives
+
+    
+    def add_items_to_upload(self):
+        for i in self.get_archives():
+            item = QListWidgetItem(i)
+            self.lw_files_to_upload.addItem(item)
+
+
+    def clicked_pb_upload_archive(self):
+        # TODO: Open new cmd in a different thread
+        # TODO: send commands to new cmd using user entered data
+        # TODO: on upload completion, notify gui
+        # s3uri = 's3://nyarchive/test_client/test_project/'
+        
+        aws.run_upload(self.bucket, self.project_dir)
+
+
+    def clicked_pb_select_dir(self):
+        fname = QFileDialog.getExistingDirectory()
+        self.project_dir = fname
+        self.le_project_folder.setText(self.project_dir)
+        self.add_items_to_upload()
+        self.gb_files_to_upload.show()
+
+
+    def clicked_cb_office(self):
+        selected_office = self.cb_office.currentText()
+        if selected_office in OFFICES:
+            self.bucket = OFFICES[selected_office]
+
+
 class MainWindow(QObject):
     """qt form"""
     def __init__(self, ui_file, config, parent=None):
@@ -390,7 +487,11 @@ class MainWindow(QObject):
         self.pb_new_project = self.window.findChild(QPushButton, 'pb_new_project')
         self.pb_new_job = self.window.findChild(QPushButton, 'pb_new_job')
         self.pb_deliver = self.window.findChild(QPushButton, 'pb_deliver')
-        self.menu_project_checker = self.window.findChild(QMenu, 'm_menu')
+        # Menu > Tools
+        self.submenu_settings = self.window.findChild(QAction, 'actionSettings')
+        # Menu > Archival
+        self.menu_project_checker = self.window.findChild(QAction, 'actionProject_Checker')
+        self.menu_project_upload = self.window.findChild(QAction, 'actionProject_Upload')
 
         # groups
         self.project_job_groupbox = self.window.findChild(QGroupBox, 'project_job_groupbox')
@@ -415,6 +516,8 @@ class MainWindow(QObject):
         self.pb_new_job.clicked.connect(self.clicked_pb_new_job)
         self.pb_deliver.clicked.connect(self.clicked_pb_deliver)
         self.menu_project_checker.triggered.connect(self.clicked_menu_project_checker)
+        self.menu_project_upload.triggered.connect(self.clicked_menu_project_upload)
+        self.submenu_settings.triggered.connect(self.clicked_submenu_settings)
 
         # start up
         self.get_clients()
@@ -615,6 +718,14 @@ class MainWindow(QObject):
     def clicked_menu_project_checker(self):
         self.dialog = ProjectCheckerDialog(project_checker_dialog, default_config)
 
+    
+    def clicked_menu_project_upload(self):
+        self.dialog = ProjectUploadDialog(project_upload_dialog, default_config)
+
+
+    def clicked_submenu_settings(self):
+        self.dialog = SettingsDialog(settings_dialog, default_config)
+
 
     def clicked_pb_deliver(self):
         client = self.client_list.currentItem().text()
@@ -687,7 +798,7 @@ if __name__ == '__main__':
 
     if default_config.project_drive:
         app = QApplication(sys.argv)
-        app.setQuitOnLastWindowClosed(False)
+        # app.setQuitOnLastWindowClosed(False)
         main = MainWindow(main_res, default_config)
 
         # Create the icon

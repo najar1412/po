@@ -687,19 +687,32 @@
    <property name="defaultUp">
     <bool>false</bool>
    </property>
-   <widget class="QMenu" name="m_menu">
+   <widget class="QMenu" name="m_tools">
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="settings"/>
-    <addaction name="actiontest_2"/>
+    <addaction name="actionSettings"/>
    </widget>
-   <addaction name="m_menu"/>
+   <widget class="QMenu" name="m_archival">
+    <property name="title">
+     <string>Archival</string>
+    </property>
+    <addaction name="actionProject_Checker"/>
+    <addaction name="actionProject_Archiving"/>
+    <addaction name="actionProject_Upload"/>
+   </widget>
+   <addaction name="m_tools"/>
+   <addaction name="m_archival"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="settings">
+  <action name="actionSettings">
    <property name="text">
     <string>Settings</string>
+   </property>
+   <property name="font">
+    <font>
+     <strikeout>true</strikeout>
+    </font>
    </property>
   </action>
   <action name="actiontest_2">
@@ -710,6 +723,34 @@
   <action name="actiontest_3">
    <property name="text">
     <string>test</string>
+   </property>
+  </action>
+  <action name="actionProject_Checker">
+   <property name="text">
+    <string>Project Checker</string>
+   </property>
+  </action>
+  <action name="actionProject_Archiving">
+   <property name="text">
+    <string>Project Compression</string>
+   </property>
+   <property name="font">
+    <font>
+     <strikeout>true</strikeout>
+    </font>
+   </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionProject_Upload">
+   <property name="text">
+    <string>Project Uploading</string>
+   </property>
+   <property name="font">
+    <font>
+     <strikeout>true</strikeout>
+    </font>
    </property>
   </action>
  </widget>
