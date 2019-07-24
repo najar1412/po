@@ -18,8 +18,8 @@ import os
 FOLDER_LOCATION = 'z:/'
 OUTPUT_LOCATION = 'd:/project_output.txt'
 MAX_CHARACTER_COUNT = 253
-IGNORED_LOCATIONS = ['APF Properties', 'Brookfield Properties Retail', 'Aurora Capital Associates']
-# IGNORED_LOCATIONS = ['visualhouse']
+# IGNORED_LOCATIONS = ['APF Properties', 'Brookfield Properties Retail', 'Aurora Capital Associates']
+IGNORED_LOCATIONS = ['visualhouse']
 
 def get_folders(location):
     return [x for x in Path(location).iterdir() if x.is_dir()]
@@ -27,7 +27,7 @@ def get_folders(location):
 
 def scan_folder(path):
     bad_projects = defaultdict(set)
-    if path.name in IGNORED_LOCATIONS:
+    if path.name not in IGNORED_LOCATIONS:
         for x in path.glob('**/*'):
             if len(x.as_uri()) > MAX_CHARACTER_COUNT:
                 bad_projects[path.name].add(x.parent.as_posix())

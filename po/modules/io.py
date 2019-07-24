@@ -120,7 +120,7 @@ class Manager():
         result = {}
 
         for issued_folder in os.listdir(issued_dir):
-            if issued_folder not in result:
+            if issued_folder not in result and os.path.isdir(issued_folder):
                 result[issued_folder] = os.listdir(
                     f'{issued_dir}\\{issued_folder}'
                 )

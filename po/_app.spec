@@ -17,12 +17,18 @@ a = Analysis(['app.py'],
              noarchive=False)
 
 artwork =  [('heart.png', 'D:\\code\\po\\po\\artwork\\heart.png', 'DATA')]
+artwork +=  [('loadingWheel.gif', 'D:\\code\\po\\po\\artwork\\loadingWheel.gif', 'DATA')]
 
 uis =  [('main_res.ui', 'D:\\code\\po\\po\\main_res.ui', 'DATA')]
 uis +=  [('new_client_dialog.ui', 'D:\\code\\po\\po\\new_client_dialog.ui', 'DATA')]
 uis +=  [('new_job_dialog.ui', 'D:\\code\\po\\po\\new_job_dialog.ui', 'DATA')]
 uis +=  [('new_project_dialog.ui', 'D:\\code\\po\\po\\new_project_dialog.ui', 'DATA')]
 uis +=  [('project_checker_dialog.ui', 'D:\\code\\po\\po\\project_checker_dialog.ui', 'DATA')]
+
+uis +=  [('settings_dialog.ui', 'D:\\code\\po\\po\\settings_dialog.ui', 'DATA')]
+uis +=  [('project_upload_dialog.ui', 'D:\\code\\po\\po\\project_upload_dialog.ui', 'DATA')]
+uis +=  [('wrong_folder_structure_dialog.ui', 'D:\\code\\po\\po\\wrong_folder_structure_dialog.ui', 'DATA')]
+uis +=  [('aws_not_installed_dialog.ui', 'D:\\code\\po\\po\\aws_not_installed_dialog.ui', 'DATA')]
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)

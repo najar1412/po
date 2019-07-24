@@ -4,18 +4,22 @@ __version__ = '2019.0.1'
 # TODO: is folder struture is correct?
 # TODO: after creating a new client, project, job. Select the newly creted 
 # thing.
+# TODO: installing AWSCLI with the app open, requires a restart before being 
+# able to detect that its installed.
+# TODO: lowercase archive names too
 
-import sys
+import sys, traceback
 import os
  
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import (
     QApplication, QPushButton, QLineEdit, QListWidget, QTreeWidget, 
     QTreeWidgetItem, QGroupBox, QTabWidget, QPushButton, QComboBox,
-    QAction, QMenu, QVBoxLayout, QSystemTrayIcon, QFileDialog, QListWidgetItem
+    QAction, QMenu, QVBoxLayout, QSystemTrayIcon, QFileDialog, QListWidgetItem,
+    QLabel
 )
-from PySide2.QtCore import QFile, QObject
-from PySide2.QtGui import QIcon
+from PySide2.QtCore import QFile, QObject, Signal, QRunnable, Slot, QThreadPool, QProcess
+from PySide2.QtGui import QIcon, QMovie
 #  WORKAROUND: below import is for pyinstaller to know where the module is.
 # isnt actually used...
 from PySide2.QtXml import QDomNode
@@ -23,8 +27,8 @@ from PySide2.QtXml import QDomNode
 from modules import io, folder, project_scanner, aws
 
 
-# Used for location UIs and other graphics. _MEIPASS will only be in `sys`
-# the app has been packaged using `pyinstaller _app.spec`
+# Used for location UIs and graphics. _MEIPASS will only be in `sys`
+# if the app has been packaged using `pyinstaller _app.spec`
 if hasattr(sys, '_MEIPASS'):
     main_res = os.path.join(sys._MEIPASS, "main_res.ui")
     new_client_dialog = os.path.join(sys._MEIPASS, "new_client_dialog.ui")
@@ -33,8 +37,11 @@ if hasattr(sys, '_MEIPASS'):
     project_checker_dialog = os.path.join(sys._MEIPASS, "project_checker_dialog.ui")
     settings_dialog = os.path.join(sys._MEIPASS, "settings_dialog.ui")
     project_upload_dialog = os.path.join(sys._MEIPASS, "project_upload_dialog.ui")
+    wrong_folder_structure_dialog = os.path.join(sys._MEIPASS, "wrong_folder_structure_dialog.ui")
+    aws_not_installed_dialog = os.path.join(sys._MEIPASS, "aws_not_installed_dialog.ui")
 
     heart_artwork = os.path.join(sys._MEIPASS, "heart.png")
+    loading_wheel = os.path.join(sys._MEIPASS, "loadingWheel.gif")
 else:
     main_res = "D:\code\po\po\\main_res.ui"
     new_client_dialog = "D:\code\po\po\\new_client_dialog.ui"
@@ -43,8 +50,11 @@ else:
     project_checker_dialog = "D:\code\po\po\\project_checker_dialog.ui"
     settings_dialog = "D:\code\po\po\\settings_dialog.ui"
     project_upload_dialog = "D:\code\po\po\\project_upload_dialog.ui"
+    wrong_folder_structure_dialog = "D:\code\po\po\\wrong_folder_structure_dialog.ui"
+    aws_not_installed_dialog = "D:\code\po\po\\aws_not_installed_dialog.ui"
 
     heart_artwork = "D:\code\po\po\\artwork\heart.png"
+    loading_wheel = "D:\code\po\po\\artwork\loadingWheel.gif"
 
 # CONFIG
 class Config():
@@ -65,6 +75,7 @@ class Config():
 
 # HELPERS
 OFFICES = {'New York': 'nyarchive', 'London': '', 'Los Angeles': ''}
+
 class Helpers():
     """Collection of helper functions, usually used for passing widgets between 
     dialogs"""
@@ -109,9 +120,76 @@ class Helpers():
         return True
 
 
-def bg_thread():
-    # TODO: imp new thread for running tasks in cmd, in the BG.
-    return False
+# THREADING
+class WorkerSignals(QObject):
+    '''
+    Defines the signals available from a running worker thread.
+
+    Supported signals are:
+
+    finished
+        No data
+    
+    error
+        `tuple` (exctype, value, traceback.format_exc() )
+    
+    result
+        `object` data returned from processing, anything
+
+    progress
+        `int` indicating % progress 
+
+    '''
+    finished = Signal()
+    error = Signal(tuple)
+    result = Signal(object)
+    progress = Signal(int)
+
+
+class Worker(QRunnable):
+    '''
+    Worker thread
+
+    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
+
+    :param callback: The function callback to run on this worker thread. Supplied args and 
+                     kwargs will be passed through to the runner.
+    :type callback: function
+    :param args: Arguments to pass to the callback function
+    :param kwargs: Keywords to pass to the callback function
+
+    '''
+
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()    
+
+        # Add the callback to our kwargs
+        self.kwargs['progress_callback'] = self.signals.progress        
+
+    @Slot()
+    def run(self):
+        '''
+        Initialise the runner function with passed args, kwargs.
+        '''
+        
+        # Retrieve args/kwargs here; and fire processing using them
+        try:
+            result = self.fn(*self.args, **self.kwargs)
+        except:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+        else:
+            self.signals.result.emit(result)  # Return the result of the processing
+        finally:
+            self.signals.finished.emit()  # Done
+
 
 # DIALOGS
 class NewClientDialog(QObject):
@@ -136,7 +214,6 @@ class NewClientDialog(QObject):
         self.pb_save = self.window.findChild(QPushButton, 'pb_save')
         self.pb_discard = self.window.findChild(QPushButton, 'pb_discard')
         self.cb_client_list = self.window.findChild(QComboBox, 'cb_client_list')
-
         self.le_client_name = self.window.findChild(QLineEdit, 'le_client_name')
 
         # actions
@@ -167,6 +244,60 @@ class NewClientDialog(QObject):
         self.window.close()
 
 
+class AwsNotInstalled(QObject):
+    def __init__(self, ui_file):
+        # UI
+        ui_file = QFile(ui_file)
+        ui_file.open(QFile.ReadOnly)
+        loader = QUiLoader()
+        self.window = loader.load(ui_file)
+        ui_file.close()
+
+        # widgets
+        self.pb_discard = self.window.findChild(QPushButton, 'pb_discard')
+        self.pb_config_awscli = self.window.findChild(QPushButton, 'pb_configAws')
+
+        # actions
+        self.pb_discard.clicked.connect(self.clicked_pb_discard)
+        self.pb_config_awscli.clicked.connect(self.clicked_pb_config_awscli)
+
+        self.window.show()
+
+
+    def clicked_pb_discard(self):
+        self.window.close()
+
+
+    def clicked_pb_config_awscli(self):
+        if aws.is_awscli_installed() and aws.does_aws_config_exist():
+            self.window.close()
+        else:
+            self.window.close()
+            self.dialog = AwsNotInstalled(aws_not_installed_dialog)
+
+
+class WrongFolderStructure(QObject):
+    def __init__(self, ui_file):
+        # UI
+        ui_file = QFile(ui_file)
+        ui_file.open(QFile.ReadOnly)
+        loader = QUiLoader()
+        self.window = loader.load(ui_file)
+        ui_file.close()
+
+        # widgets
+        self.pb_discard = self.window.findChild(QPushButton, 'pb_discard')
+
+        # actions
+        self.pb_discard.clicked.connect(self.clicked_pb_discard)
+
+        self.window.show()
+
+
+    def clicked_pb_discard(self):
+        self.window.close()
+
+
 class ProjectCheckerDialog(QObject):
     # TODO: if user changes client during making a new job, the 
     # project list should update to the new client
@@ -183,19 +314,31 @@ class ProjectCheckerDialog(QObject):
         # widgets
         self.le_project_scan = self.window.findChild(QPushButton, 'le_project_scan')
         self.project_tree = self.window.findChild(QTreeWidget, 'project_tree')
-        self.main_layout = self.window.findChild(QVBoxLayout, 'verticalLayout')
         self.project_tree.hide()
+        self.main_layout = self.window.findChild(QVBoxLayout, 'verticalLayout')
+        self.la_loading_wheel = self.window.findChild(QLabel, 'loadingWheel')
+        self.m_loading_wheel = QMovie(loading_wheel)
+        self.la_loading_wheel.setMovie(self.m_loading_wheel)
+        self.m_loading_wheel.start()
+        self.la_loading_wheel.hide()
 
         # actions
-        self.le_project_scan.clicked.connect(self.clicked_le_project_scan)
+        self.le_project_scan.clicked.connect(self.thread_project_scan)
         self.project_tree.itemSelectionChanged.connect(self.action_project_tree_changed)
         
         self.window.show()
 
+        # threading
+        self.threadpool = QThreadPool()
+
 
     # action functions
-    def clicked_le_project_scan(self):
+    def clicked_le_project_scan(self, progress_callback):
         # TODO: refresh project_job_list after adding a new project
+        self.project_tree.clear()
+        self.project_tree.hide()
+        self.la_loading_wheel.show()
+
         projects = project_scanner.get_folders(self.config.fetch_drive())
         for project in projects:
             bad_project = project_scanner.run_report(project)
@@ -216,7 +359,6 @@ class ProjectCheckerDialog(QObject):
     # functions
     def update_project_checker_tree(self, projects):
         """updates the project tree, when a new client is selected"""
-        self.project_tree.show()
         for key, value in projects.items():
             root = QTreeWidgetItem(self.project_tree, [f'{key} ({len(value)} issues)'])
 
@@ -225,6 +367,32 @@ class ProjectCheckerDialog(QObject):
                 root.addChild(item)
 
         return True
+
+
+    # Threading
+    def progress_fn(self, n):
+        print("%d%% done" % n)
+
+
+    def print_output(self, s):
+        print(s)
+
+
+    def thread_complete(self):
+        self.la_loading_wheel.hide()
+        self.project_tree.show()
+        print("THREAD COMPLETE!")
+
+
+    def thread_project_scan(self):
+        # Pass the function to execute
+        worker = Worker(self.clicked_le_project_scan) # Any other args, kwargs are passed to the run function
+        # worker.signals.result.connect(self.print_output)
+        worker.signals.finished.connect(self.thread_complete)
+        # worker.signals.progress.connect(self.progress_fn)
+        
+        # Execute
+        self.threadpool.start(worker) 
 
 
 class NewJobDialog(QObject):
@@ -408,11 +576,18 @@ class ProjectUploadDialog(QObject):
         self.le_project_folder.setText(self.project_dir)
 
         # actions
-        self.pb_upload_archive.clicked.connect(self.clicked_pb_upload_archive)
+        self.pb_upload_archive.clicked.connect(self.thread_upload_archive)
         self.pb_select_dir.clicked.connect(self.clicked_pb_select_dir)
         self.cb_office.activated.connect(self.clicked_cb_office)
 
-        self.window.show()
+        if aws.is_awscli_installed() and aws.does_aws_config_exist():
+            self.window.show()
+        else:
+            self.dialog = AwsNotInstalled(aws_not_installed_dialog)
+
+        # threading
+        self.threadpool = QThreadPool()
+
 
     # HELPERS
     def get_archives(self):
@@ -430,7 +605,7 @@ class ProjectUploadDialog(QObject):
             self.lw_files_to_upload.addItem(item)
 
 
-    def clicked_pb_upload_archive(self):
+    def clicked_pb_upload_archive(self, progress_callback):
         # TODO: Open new cmd in a different thread
         # TODO: send commands to new cmd using user entered data
         # TODO: on upload completion, notify gui
@@ -451,6 +626,30 @@ class ProjectUploadDialog(QObject):
         selected_office = self.cb_office.currentText()
         if selected_office in OFFICES:
             self.bucket = OFFICES[selected_office]
+
+
+    # Threading
+    def progress_fn(self, n):
+        print("%d%% done" % n)
+
+
+    def print_output(self, s):
+        print(s)
+
+
+    def thread_complete(self):
+        print("THREAD COMPLETE!")
+
+
+    def thread_upload_archive(self):
+        # Pass the function to execute
+        worker = Worker(self.clicked_pb_upload_archive) # Any other args, kwargs are passed to the run function
+        worker.signals.result.connect(self.print_output)
+        worker.signals.finished.connect(self.thread_complete)
+        worker.signals.progress.connect(self.progress_fn)
+        
+        # Execute
+        self.threadpool.start(worker) 
 
 
 class MainWindow(QObject):
@@ -561,19 +760,23 @@ class MainWindow(QObject):
         self.show(self.pb_new_job)
         
         if self.project_tree.currentItem().parent():
-            project = self.project_tree.currentItem().parent().text(0)
-            job = self.project_tree.currentItem().text(0)
+            try:
+                project = self.project_tree.currentItem().parent().text(0)
+                job = self.project_tree.currentItem().text(0)
 
-            master_files_names = io.Manager(self.project_root).get_master_files(client, project, job)
-            scene_files_names = io.Manager(self.project_root).get_scene_files(client, project, job)
-            self.update_issued_tree(job)
-            self.update_master_tree(master_files_names)
-            self.update_scene_tree(scene_files_names)
+                master_files_names = io.Manager(self.project_root).get_master_files(client, project, job)
+                scene_files_names = io.Manager(self.project_root).get_scene_files(client, project, job)
+                self.update_issued_tree(job)
+                self.update_master_tree(master_files_names)
+                self.update_scene_tree(scene_files_names)
 
-            self.show(self.folder_shortcuts)
-            self.show(self.gb_job_info)
+                self.show(self.folder_shortcuts)
+                self.show(self.gb_job_info)
 
-            return True
+                return True
+            except:
+                print('Wrong folder structure')
+                self.dialog = WrongFolderStructure(wrong_folder_structure_dialog)
 
         else:
             self.hide(self.folder_shortcuts)
@@ -667,7 +870,7 @@ class MainWindow(QObject):
         widgets = {'hide': [self.project_job_groupbox], 'clear': [self.project_tree, self.client_list]}
         helper = Helpers(widgets=widgets, data=[self.get_clients])
 
-        self.dialog = NewClientDialog(new_client_dialog, default_config, helper=helper)
+        self.dialog = NewClientDialog(new_client_dialog, default_config, helper=helper)        
 
 
     def clicked_pb_refresh(self):
@@ -809,10 +1012,24 @@ if __name__ == '__main__':
         tray.setIcon(icon)
         tray.setVisible(True)
 
+        # Menu items
         menu = QMenu()
+        project_explorer_action = QAction("Project Explorer")
+        project_checker_action = QAction("Project Checker")
+        archive_uploader_action = QAction("Archive Uploader")
+        settings_action = QAction("Settings")
         exit_action = QAction("Exit")
+
+        # Menu actions
         exit_action.triggered.connect(app.instance().quit)
 
+        # Menu finish
+        # menu.addAction(project_explorer_action)
+        # menu.addAction(project_checker_action)
+        # menu.addAction(archive_uploader_action)
+        # menu.addSeparator()
+        # menu.addAction(settings_action)
+        # menu.addSeparator()
         menu.addAction(exit_action)
 
         tray.setContextMenu(menu)
