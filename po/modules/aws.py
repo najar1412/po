@@ -7,18 +7,15 @@ import subprocess
 
 # TODO: check if project/client/archive already exists (case senstive)
 
-
 def configure_awscli():
     subprocess.run(
         ['aws', 'configure'], 
         creationflags=subprocess.CREATE_NEW_CONSOLE,
         )
 
-
 def _build_s3uri(bucket, local_dir):
     s3_loc = '/'.join(local_dir.split('/')[1:])
     return f's3://{bucket}/{s3_loc}/'
-
 
 def run_upload(bucket, local_dir, ignore_folders=None):
     excludes = []

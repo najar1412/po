@@ -1,3 +1,5 @@
+"""Source code for handling filesystem tasks"""
+
 import pathlib
 import os
 import json
@@ -12,24 +14,25 @@ from distutils.spawn import find_executable
 
 
 def get_immediate_subdirectories(a_dir):
+    """Returns all root folders within a given directory"""
     return [name for name in os.listdir(a_dir)
             if os.path.isdir(os.path.join(a_dir, name))]
 
-
 def _aws_cred_location():
+    """Returns AWS configuration file location"""
     home = os.path.expanduser('~')
     return os.path.join(home, '.aws')
 
-
 def is_awscli_installed():
+    """Returns Bool is aws is installed using PATH"""
     if find_executable('aws'):
         return True
     else:
         return False
 
-
 def check_aws_config():
-    """checks for AWS cred files"""
+    """Returns Bool if physical AWS cred file exists"""
+    # TODO: Check for both `credentials` and `config` files
     aws_loc = _aws_cred_location()
 
     if os.path.exists(aws_loc):
@@ -40,8 +43,8 @@ def check_aws_config():
     else:
         return False
 
-
 def read_aws_cred():
+    """Parses both AWS cred files"""
     aws_cred_loc = os.path.join(_aws_cred_location(), 'credentials')
     aws_config_loc = os.path.join(_aws_cred_location(), 'config')
     data = {}
@@ -62,28 +65,27 @@ def read_aws_cred():
 
     return data
 
-
 def drive_exist(letter):
-    bla = pathlib.Path(f"{letter}:").exists()
-    return bla
-
+    """Check is drive path exists"""
+    return pathlib.Path(f"{letter}:").exists()
 
 def read_default_config_file(file):
+    """Reads in Office specific configuation"""
     with open(file) as json_file:
         data = json.loads(json_file.read())
 
     return data
 
-
 def write_default_config_file(file, new_data):
+    """Writes Office specific configuation"""
     with open(file, 'r+') as json_file:
         json_file.truncate(0)
         json_file.write(json.dumps(new_data))
 
     return True
 
-
 def write_aws_config_file(new_data):
+    """Writes AWS specific data"""
     aws_loc = _aws_cred_location()
     aws_cred = f'{aws_loc}\\credentials'
     aws_config = f'{aws_loc}\\config'
@@ -108,7 +110,6 @@ def write_aws_config_file(new_data):
 
     return True
 
-
 class Manager():
     """tools built around default project structure.
     root: str: ..."""
@@ -119,7 +120,6 @@ class Manager():
         # TODO: imp file, folder checking.
         self.IGNORED = ['visualhouse', '1 From AWS', 'Thumbs.db', '.DS_Store']
 
-
     def _string_builder(self, args):
         """builds directory from a list of strings"""
         # TODO: pathlib for crossplatform support.
@@ -129,12 +129,10 @@ class Manager():
             
         return _str
 
-
     def dir_from_root(self, *args):
         # TODO: self.root doesnt seem to be escaping \\
         # slicing string as WORKAROUND.
         return f'{str(self.root)[:-1]}{self._string_builder(args)}'
-
 
     def get_clients(self):
         """get all client folders from self.root
@@ -148,7 +146,6 @@ class Manager():
                 result.append(client)
 
         return sorted(result)
-
 
     def get_projects(self, client):
         """get all projects under client.
@@ -165,7 +162,6 @@ class Manager():
 
         return result
 
-
     def create_folder(self, folder_name):
         """creates all folders that dont exist in folder_name"""
         # TODO: refactor to self.create_path
@@ -178,13 +174,11 @@ class Manager():
                 else:
                     new_dir.mkdir()
 
-
     def create_path(self, string_path):
         """creates all folders that dont exist in folder_name
         string_path: str repr of path, sep with double forward slash"""
         path = pathlib.Path(self.root, string_path)
         pathlib.Path(path).mkdir(parents=True, exist_ok=True)
-
 
     def get_projects_and_jobs(self, client):
         """retrieves all of a clients projects and tasks.
@@ -203,7 +197,6 @@ class Manager():
                 ]
 
         return projects_and_jobs
-
 
     def get_issues_files(self, client_name, project_name, job_name):
         """retrieves all of a jobs issued information.
@@ -226,7 +219,6 @@ class Manager():
 
         return result
 
-
     def get_master_files(self, client_name, project_name, job_name):
         """gets all names of files from a still project Master folder
         return: list: ['file', 'file', 'file']"""
@@ -237,7 +229,6 @@ class Manager():
         )
         
         return os.listdir(master_folder_dir)
-
 
     def get_scene_files(self, client_name, project_name, job_name):
         """gets all names of files from a still project Scene folder
@@ -268,7 +259,6 @@ class OsOpen():
             self._filename = None
         else:
             self._filename = os.path.split(location)[1]
-
 
     def open(self):
         """decides wether to open a file or directory"""

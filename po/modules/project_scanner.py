@@ -23,7 +23,6 @@ IGNORED_LOCATIONS = ['visualhouse', '#recycle', '.TemporaryItems']
 def get_folders(location):
     return [x for x in Path(location).iterdir() if x.is_dir()]
 
-
 def scan_folder(path):
     bad_projects = defaultdict(set)
     if path.name not in IGNORED_LOCATIONS:
@@ -33,7 +32,6 @@ def scan_folder(path):
 
         if bad_projects:
             return dict(bad_projects)
-
 
 def check_output(location, data):
     if Path(location).exists():
@@ -46,7 +44,6 @@ def check_output(location, data):
                     f.write(f'\n\t{addy}')
                 f.write(f'\n')
 
-
 def run_report(folder):
     bad_projects = {}
 
@@ -58,7 +55,6 @@ def run_report(folder):
         return bad_projects
 
     return False
-
 
 def runner():
     print(f':: Scanning projects drive. {FOLDER_LOCATION} ...')

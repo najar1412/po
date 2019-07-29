@@ -69,7 +69,8 @@ else:
 
 # CONFIG
 class NewConfig():
-    # TODO: impl into all other Classes
+    """Handles all Configuration"""
+    # TODO: should this also deal with AWS config?
     # TODO: dup code in `constructor` and `_reload`
     def __init__(self, config_file):
         self.config_file = config_file
@@ -81,7 +82,6 @@ class NewConfig():
 
         self.drive_to_scan = f'{self.config.get("project_drive")}:\\'
 
-
     def _reload(self):
         if os.path.exists(self.config_file):
             with open(self.config_file, 'r', encoding='utf-8') as f:
@@ -90,7 +90,6 @@ class NewConfig():
         else:
             print('NO CONFIG FOUND')
 
-
     def get(self, attr=None):
         """Accesses config file to retrivate data"""
         self._reload()
@@ -98,7 +97,6 @@ class NewConfig():
             return self.config[attr]
         else:
             return self.config
-
 
     def get_drive(self, letter=None):
         self._reload()
@@ -132,7 +130,6 @@ class Helpers():
             self.data = data
         else:
             self.data = None
-        
         
     def window_refresh(self):
         """hides and clears any number widgets and re-populates.
@@ -233,6 +230,7 @@ class Worker(QRunnable):
 
 # DIALOGS
 class NewClientDialog(QObject):
+    """Displays New Client Dialog"""
     def __init__(self, ui_file, config, clients=None, parent=None, helper=None):
 
         # globals
@@ -271,7 +269,6 @@ class NewClientDialog(QObject):
 
         self.window.show()
 
-    
     def clicked_pb_save(self):
         client_name = self.le_client_name.text()
         io.Manager(self.project_root).create_folder(client_name)
@@ -279,12 +276,12 @@ class NewClientDialog(QObject):
         self.window.close()
         self.helper.window_refresh()
 
-    
     def clicked_pb_discard(self):
         self.window.close()
 
 
 class AwsNotInstalled(QObject):
+    """Displays AWS Not Installed Dialog"""
     def __init__(self, ui_file):
         # UI
         ui_file = QFile(ui_file)
@@ -303,10 +300,8 @@ class AwsNotInstalled(QObject):
 
         self.window.show()
 
-
     def clicked_pb_discard(self):
         self.window.close()
-
 
     def clicked_pb_config_awscli(self):
         if io.is_awscli_installed() and io.check_aws_config():
@@ -317,6 +312,7 @@ class AwsNotInstalled(QObject):
 
 
 class WrongFolderStructure(QObject):
+    """Displays Wrong Folder Structure Dialog"""
     def __init__(self, ui_file):
         # UI
         ui_file = QFile(ui_file)
@@ -333,12 +329,12 @@ class WrongFolderStructure(QObject):
 
         self.window.show()
 
-
     def clicked_pb_discard(self):
         self.window.close()
 
 
 class FirstTimeRun(QObject):
+    """Displays First Time Dialog"""
     def __init__(self, ui_file, config):
         # UI
         ui_file = QFile(ui_file)
@@ -358,7 +354,6 @@ class FirstTimeRun(QObject):
 
         self.window.show()
 
-
     def clicked_pb_save_default(self):
         new_data = {
             'first_run': False,
@@ -373,6 +368,7 @@ class FirstTimeRun(QObject):
 
 
 class ProjectCheckerDialog(QObject):
+    """Displays Project Scanner Dialog"""
     # TODO: if user changes client during making a new job, the 
     # project list should update to the new client
     # TODO: on creating a new job strut projects window needs to refresh
@@ -406,7 +402,6 @@ class ProjectCheckerDialog(QObject):
         # threading
         self.threadpool = QThreadPool()
 
-
     # action functions
     def clicked_le_project_scan(self, progress_callback):
         # TODO: refresh project_job_list after adding a new project
@@ -423,7 +418,6 @@ class ProjectCheckerDialog(QObject):
             if bad_project:
                 self.update_project_checker_tree(bad_project)
 
-
     def action_project_tree_changed(self):
             """opens selected folder"""
 
@@ -432,7 +426,6 @@ class ProjectCheckerDialog(QObject):
             
             else:
                 pass
-
 
     # functions
     def update_project_checker_tree(self, projects):
@@ -446,19 +439,15 @@ class ProjectCheckerDialog(QObject):
 
         return True
 
-
     # Threading
     def progress_fn(self, n):
         print("%d%% done" % n)
 
-
     def print_output(self, s):
         print(s)
 
-
     def thread_complete(self):
         self.la_loading_wheel.hide()
-
 
     def thread_project_scan(self):
         # Pass the function to execute
@@ -472,6 +461,7 @@ class ProjectCheckerDialog(QObject):
 
 
 class NewJobDialog(QObject):
+    """Displays New Job Dialog"""
     # TODO: if user changes client during making a new job, the 
     # project list should update to the new client
     # TODO: on creating a new job strut projects window needs to refresh
@@ -525,7 +515,6 @@ class NewJobDialog(QObject):
 
         self.window.show()
 
-    
     def clicked_pb_save(self):
         # client_name = self.le_client_name.text()
 
@@ -543,12 +532,12 @@ class NewJobDialog(QObject):
         self.window.close()
         self.helper.window_refresh()
 
-    
     def clicked_pb_discard(self):
         self.window.close()
 
 
 class NewProjectDialog(QObject):
+    """Displays New Project Dialog"""
     def __init__(self, ui_file, config, clients=None, parent=None, helper=None):
 
         # UI
@@ -591,7 +580,6 @@ class NewProjectDialog(QObject):
 
         self.window.show()
 
-    
     def clicked_pb_save(self):
         # TODO: refresh project_job_list after adding a new project
         data = {
@@ -607,12 +595,12 @@ class NewProjectDialog(QObject):
         self.window.close()
         self.helper.window_refresh()
 
-    
     def clicked_pb_discard(self):
         self.window.close()
 
 
 class SettingsDialog(QObject):
+    """Displays Settings Dialog"""
     def __init__(self, ui_file, config, clients=None, parent=None, helper=None):
         self.config = config
 
@@ -674,15 +662,12 @@ class SettingsDialog(QObject):
 
         self.window.show()
 
-
     def clicked_pb_config_awscli(self):
         aws.configure_awscli()
         self.window.close()
 
-
     def clicked_pb_discard(self):
         self.window.close()
-
 
     def clicked_pb_save_defaults(self):
         # self.cb_office_select.currentText()
@@ -698,7 +683,6 @@ class SettingsDialog(QObject):
 
         io.write_default_config_file(default_config_file, new_data)
 
-
     def clicked_pb_save_aws_defaults(self):
         new_data = {
             "aws_access_key_id": self.le_aws_access_id.text(),
@@ -711,6 +695,7 @@ class SettingsDialog(QObject):
 
 
 class ProjectUploadDialog(QObject):
+    """Displays Archive Upload Dialog"""
     # TODO: Disable upload button until Project folder and selected office have
     # been done.
     def __init__(self, ui_file, config, clients=None, parent=None, helper=None):
@@ -753,7 +738,6 @@ class ProjectUploadDialog(QObject):
         # threading
         self.threadpool = QThreadPool()
 
-
     # HELPERS
     def get_archives(self):
         archives = []
@@ -763,19 +747,16 @@ class ProjectUploadDialog(QObject):
 
         return archives
 
-    
     def add_items_to_upload(self):
         for i in self.get_archives():
             item = QListWidgetItem(i)
             self.lw_files_to_upload.addItem(item)
-
 
     def clicked_pb_upload_archive(self, progress_callback):
         # TODO: on upload completion, notify gui
 
         folders_to_ignore = io.get_immediate_subdirectories(self.project_dir)
         aws.run_upload(self.bucket, self.project_dir, folders_to_ignore)
-
 
     def clicked_pb_select_dir(self):
         fname = QFileDialog.getExistingDirectory()
@@ -784,25 +765,20 @@ class ProjectUploadDialog(QObject):
         self.add_items_to_upload()
         self.gb_files_to_upload.show()
 
-
     def clicked_cb_office(self):
         selected_office = self.cb_office.currentText()
         if selected_office in OFFICES:
             self.bucket = OFFICES[selected_office]
 
-
     # Threading
     def progress_fn(self, n):
         print("%d%% done" % n)
 
-
     def print_output(self, s):
         print(s)
 
-
     def thread_complete(self):
         print("THREAD COMPLETE!")
-
 
     def thread_upload_archive(self):
         # Pass the function to execute
@@ -816,7 +792,7 @@ class ProjectUploadDialog(QObject):
 
 
 class MainWindow(QObject):
-    """qt form"""
+    """Displays Main QT Window"""
     def __init__(self, ui_file, config, parent=None):
         super(MainWindow, self).__init__(parent)
 
@@ -887,17 +863,14 @@ class MainWindow(QObject):
         self.get_clients()
         self.window.show()
 
-
     # utility
     def hide(self, widget):
         """hides a widget"""
         widget.close()
 
-
     def show(self, widget):
         """shows a widget"""
         widget.show()
-
 
     # widget actions
     def action_client_list_changed(self):
@@ -913,7 +886,6 @@ class MainWindow(QObject):
         self.hide(self.pb_new_job)
 
         return self.update_project_tree(client)
-
 
     def action_project_tree_changed(self):
         """logic to run when user selects a project/job"""
@@ -946,7 +918,6 @@ class MainWindow(QObject):
             self.hide(self.folder_shortcuts)
             self.hide(self.gb_job_info)
 
-
     def action_issued_tree_changed(self):
             """checks wether or not the selected item is a file and runs it."""
             client = self.client_list.currentItem().text()
@@ -966,7 +937,6 @@ class MainWindow(QObject):
             else:
                 pass
 
-
     def action_master_tree_changed(self):
         client = self.client_list.currentItem().text()
         job = self.project_tree.currentItem().text(0)
@@ -985,7 +955,6 @@ class MainWindow(QObject):
         else:
             pass
 
-
     def clicked_fs_ref(self):
         client = self.client_list.currentItem().text()
         project = self.project_tree.currentItem().parent().text(0)
@@ -995,7 +964,6 @@ class MainWindow(QObject):
             client, project, job, 'Support', 'Reference Imagery'
         )
         io.OsOpen(ref_folder_dir).open()
-
 
     def clicked_fs_photography(self):
         client = self.client_list.currentItem().text()
@@ -1007,7 +975,6 @@ class MainWindow(QObject):
         )
         io.OsOpen(photography_loc).open()
 
-
     def clicked_fs_render(self):
         client = self.client_list.currentItem().text()
         project = self.project_tree.currentItem().parent().text(0)
@@ -1017,7 +984,6 @@ class MainWindow(QObject):
             client, project, job, 'Still & Film', 'Renders'
         )
         io.OsOpen(render_loc).open()
-
 
     def clicked_pb_project_drive(self):
         # self.project_root = self.config._update_project_drive(self.le_project_drive.text())
@@ -1029,14 +995,12 @@ class MainWindow(QObject):
         
         self.get_clients()
 
-
     def clicked_pb_new_client(self):
         # TODO: figure how to refresh the client list once a new folder has been added.
         widgets = {'hide': [self.project_job_groupbox], 'clear': [self.project_tree, self.client_list]}
         helper = Helpers(widgets=widgets, data=[self.get_clients])
 
         self.dialog = NewClientDialog(new_client_dialog, default_config, helper=helper)        
-
 
     def clicked_pb_refresh(self):
         self.hide(self.project_job_groupbox)
@@ -1045,7 +1009,6 @@ class MainWindow(QObject):
 
         self.get_clients()
         print('refreshing...')
-
 
     def clicked_pb_new_project(self):
         clients = io.Manager(self.project_root).get_clients()
@@ -1058,7 +1021,6 @@ class MainWindow(QObject):
         helper = Helpers(data=[self.update_project_tree, selected_client])
 
         self.dialog = NewProjectDialog(new_project_dialog, default_config, clients=clients, helper=helper)
-
 
     def clicked_pb_new_job(self):
         clients = {
@@ -1082,18 +1044,14 @@ class MainWindow(QObject):
 
         self.dialog = NewJobDialog(new_job_dialog, default_config, clients=clients, projects=projects, helper=helper)
 
-
     def clicked_menu_project_checker(self):
         self.dialog = ProjectCheckerDialog(project_checker_dialog, default_config)
 
-    
     def clicked_menu_project_upload(self):
         self.dialog = ProjectUploadDialog(project_upload_dialog, default_config)
 
-
     def clicked_submenu_settings(self):
         self.dialog = SettingsDialog(settings_dialog, default_config)
-
 
     def clicked_pb_deliver(self):
         client = self.client_list.currentItem().text()
@@ -1104,7 +1062,6 @@ class MainWindow(QObject):
             client, project, job, 'Deliverables'
         )
         io.OsOpen(deliver_loc).open()
-
 
     # functions
     def get_clients(self):
@@ -1117,7 +1074,6 @@ class MainWindow(QObject):
         
         for client in clients:
             self.client_list.addItem(client)
-
 
     def update_project_tree(self, client_name):
         """updates the project tree, when a new client is selected"""
@@ -1135,7 +1091,6 @@ class MainWindow(QObject):
 
         return t
 
-
     def update_issued_tree(self, job):
         """updates the issued tree, when a new project/job is selected"""
         self.issued_tree.clear()
@@ -1152,12 +1107,10 @@ class MainWindow(QObject):
                     item = QTreeWidgetItem([val])
                     root.addChild(item)
 
-
     def update_master_tree(self, files):
         self.master_list.clear()
         for file in files:
             self.master_list.addItem(file)
-
 
     def update_scene_tree(self, files):
         self.scene_list.clear()
