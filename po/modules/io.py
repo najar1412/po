@@ -1,12 +1,113 @@
 import pathlib
 import os
+import json
+from distutils.spawn import find_executable
 
 
-# scan project dir
-# report directors over the standard windows dir length
-# make project folders
-# display drive projects
-# archive project
+# TODO: scan project dir
+# TODO: report directors over the standard windows dir length
+# TODO: make project folders
+# TODO: display drive projects
+# TODO: archive project
+
+
+def get_immediate_subdirectories(a_dir):
+    return [name for name in os.listdir(a_dir)
+            if os.path.isdir(os.path.join(a_dir, name))]
+
+
+def _aws_cred_location():
+    home = os.path.expanduser('~')
+    return os.path.join(home, '.aws')
+
+
+def is_awscli_installed():
+    if find_executable('aws'):
+        return True
+    else:
+        return False
+
+
+def check_aws_config():
+    """checks for AWS cred files"""
+    aws_loc = _aws_cred_location()
+
+    if os.path.exists(aws_loc):
+        if os.path.isfile(f'{aws_loc}\\credentials'):
+            return True
+        else:
+            False
+    else:
+        return False
+
+
+def read_aws_cred():
+    aws_cred_loc = os.path.join(_aws_cred_location(), 'credentials')
+    aws_config_loc = os.path.join(_aws_cred_location(), 'config')
+    data = {}
+
+    with open(aws_cred_loc, 'r', encoding='utf-8') as aws_cred:
+        lines = aws_cred.readlines()
+        for line in lines:
+            if not line.startswith('['):
+                parsed = line.rstrip().split(' = ')
+                data[parsed[0]] = parsed[1]
+
+    with open(aws_config_loc, 'r', encoding='utf-8') as aws_config:
+        lines = aws_config.readlines()
+        for line in lines:
+            if not line.startswith('['):
+                parsed = line.rstrip().split(' = ')
+                data[parsed[0]] = parsed[1]
+
+    return data
+
+
+def drive_exist(letter):
+    bla = pathlib.Path(f"{letter}:").exists()
+    return bla
+
+
+def read_default_config_file(file):
+    with open(file) as json_file:
+        data = json.loads(json_file.read())
+
+    return data
+
+
+def write_default_config_file(file, new_data):
+    with open(file, 'r+') as json_file:
+        json_file.truncate(0)
+        json_file.write(json.dumps(new_data))
+
+    return True
+
+
+def write_aws_config_file(new_data):
+    aws_loc = _aws_cred_location()
+    aws_cred = f'{aws_loc}\\credentials'
+    aws_config = f'{aws_loc}\\config'
+    
+    with open(aws_cred, 'r+') as json_file:
+        json_file.truncate(0)
+        json_file.write('[default]\n')
+        for k, v in new_data.items():
+            if k == 'aws_access_key_id':
+                json_file.write(f'{k} = {v}\n')
+            if k == 'aws_secret_access_key':
+                json_file.write(f'{k} = {v}\n')
+
+    with open(aws_config, 'r+') as json_file:
+        json_file.truncate(0)
+        json_file.write('[default]\n')
+        for k, v in new_data.items():
+            if k == 'region':
+                json_file.write(f'{k} = {v}\n')
+            if k == 'output':
+                json_file.write(f'{k} = {v}\n')
+
+    return True
+
 
 class Manager():
     """tools built around default project structure.
@@ -26,7 +127,6 @@ class Manager():
         for loc in args:
             _str = f'{_str}\\{loc}'
             
-        
         return _str
 
 
@@ -46,7 +146,6 @@ class Manager():
         for client in clients:
             if os.path.isdir(f'{self.root}{client}'):
                 result.append(client)
-
 
         return sorted(result)
 

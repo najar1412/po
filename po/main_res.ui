@@ -87,7 +87,7 @@
        <item>
         <widget class="QLabel" name="l_project_drive">
          <property name="text">
-          <string>Project Drive:</string>
+          <string>Drive to Search:</string>
          </property>
         </widget>
        </item>
@@ -101,7 +101,7 @@
        <item>
         <widget class="QPushButton" name="pb_project_drive">
          <property name="text">
-          <string>Set</string>
+          <string>Search</string>
          </property>
         </widget>
        </item>
@@ -711,7 +711,7 @@
    </property>
    <property name="font">
     <font>
-     <strikeout>true</strikeout>
+     <strikeout>false</strikeout>
     </font>
    </property>
   </action>
@@ -748,9 +748,7 @@
     <string>Project Uploading</string>
    </property>
    <property name="font">
-    <font>
-     <strikeout>false</strikeout>
-    </font>
+    <font/>
    </property>
   </action>
  </widget>

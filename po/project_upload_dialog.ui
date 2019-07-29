@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>401</width>
-    <height>618</height>
+    <height>568</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -26,9 +26,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>250</y>
+     <y>230</y>
      <width>381</width>
-     <height>312</height>
+     <height>261</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -93,28 +93,39 @@
      </widget>
     </item>
     <item>
-     <widget class="QComboBox" name="cb_office">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <property name="text">
-        <string>Select Office</string>
-       </property>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Uploading to:</string>
+        </property>
+       </widget>
       </item>
       <item>
-       <property name="text">
-        <string>London</string>
-       </property>
+       <widget class="QComboBox" name="cb_office">
+        <item>
+         <property name="text">
+          <string>Select Office</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>London</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>New York</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Los Angeles</string>
+         </property>
+        </item>
+       </widget>
       </item>
-      <item>
-       <property name="text">
-        <string>New York</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Los Angeles</string>
-       </property>
-      </item>
-     </widget>
+     </layout>
     </item>
     <item>
      <widget class="Line" name="line">
@@ -152,7 +163,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>150</y>
+     <y>130</y>
      <width>381</width>
      <height>91</height>
     </rect>
@@ -183,7 +194,7 @@
      <item>
       <widget class="QLabel" name="label_10">
        <property name="text">
-        <string>2) While uploading you'll need to check the CMD window for success or failures.</string>
+        <string>2) While uploading you'll need to check the CMD window that pops up for success or failures.</string>
        </property>
        <property name="wordWrap">
         <bool>true</bool>
@@ -202,7 +213,7 @@
      <x>10</x>
      <y>10</y>
      <width>381</width>
-     <height>131</height>
+     <height>111</height>
     </rect>
    </property>
    <property name="autoFillBackground">
@@ -223,7 +234,7 @@
       <x>9</x>
       <y>20</y>
       <width>361</width>
-      <height>101</height>
+      <height>81</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -241,16 +252,6 @@
       <widget class="QLabel" name="label_7">
        <property name="text">
         <string>2) Display upload confirmation.</string>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_8">
-       <property name="text">
-        <string>3) Remove `Select Office` and read directly from `Settings` tab.</string>
        </property>
        <property name="wordWrap">
         <bool>true</bool>

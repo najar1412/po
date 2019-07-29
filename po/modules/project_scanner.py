@@ -18,8 +18,7 @@ import os
 FOLDER_LOCATION = 'z:/'
 OUTPUT_LOCATION = 'd:/project_output.txt'
 MAX_CHARACTER_COUNT = 253
-# IGNORED_LOCATIONS = ['APF Properties', 'Brookfield Properties Retail', 'Aurora Capital Associates']
-IGNORED_LOCATIONS = ['visualhouse']
+IGNORED_LOCATIONS = ['visualhouse', '#recycle', '.TemporaryItems']
 
 def get_folders(location):
     return [x for x in Path(location).iterdir() if x.is_dir()]

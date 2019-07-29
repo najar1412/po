@@ -6,17 +6,22 @@ __version__ = '2019.0.1'
 # thing.
 # TODO: installing AWSCLI with the app open, requires a restart before being 
 # able to detect that its installed.
-# TODO: lowercase archive names too
+# TODO: get context menu working
+# TODO: strange bug when uploading. if a nested dir has a zip file, that
+# strucvture also gets uploaded...
+# TODO: need a stop/cancel button for networks scanning.
 
 import sys, traceback
 import os
+import json
+import pathlib
  
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import (
     QApplication, QPushButton, QLineEdit, QListWidget, QTreeWidget, 
     QTreeWidgetItem, QGroupBox, QTabWidget, QPushButton, QComboBox,
     QAction, QMenu, QVBoxLayout, QSystemTrayIcon, QFileDialog, QListWidgetItem,
-    QLabel
+    QLabel, QHBoxLayout, QWidget
 )
 from PySide2.QtCore import QFile, QObject, Signal, QRunnable, Slot, QThreadPool, QProcess
 from PySide2.QtGui import QIcon, QMovie
@@ -39,6 +44,9 @@ if hasattr(sys, '_MEIPASS'):
     project_upload_dialog = os.path.join(sys._MEIPASS, "project_upload_dialog.ui")
     wrong_folder_structure_dialog = os.path.join(sys._MEIPASS, "wrong_folder_structure_dialog.ui")
     aws_not_installed_dialog = os.path.join(sys._MEIPASS, "aws_not_installed_dialog.ui")
+    first_time_run_dialog = os.path.join(sys._MEIPASS, "first_time_run_dialog.ui")
+
+    default_config_file = os.path.join(sys._MEIPASS, "default_config.json")
 
     heart_artwork = os.path.join(sys._MEIPASS, "heart.png")
     loading_wheel = os.path.join(sys._MEIPASS, "loadingWheel.gif")
@@ -52,29 +60,61 @@ else:
     project_upload_dialog = "D:\code\po\po\\project_upload_dialog.ui"
     wrong_folder_structure_dialog = "D:\code\po\po\\wrong_folder_structure_dialog.ui"
     aws_not_installed_dialog = "D:\code\po\po\\aws_not_installed_dialog.ui"
+    first_time_run_dialog = "D:\code\po\po\\first_time_run_dialog.ui"
+
+    default_config_file = "D:\code\po\po\\default_config.json"
 
     heart_artwork = "D:\code\po\po\\artwork\heart.png"
     loading_wheel = "D:\code\po\po\\artwork\loadingWheel.gif"
 
 # CONFIG
-class Config():
-    def __init__(self):
-        self.project_drive = 'z:\\'
+class NewConfig():
+    # TODO: impl into all other Classes
+    # TODO: dup code in `constructor` and `_reload`
+    def __init__(self, config_file):
+        self.config_file = config_file
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r', encoding='utf-8') as f:
+                self.config = json.loads(f.read())
+        else:
+            print('NO CONFIG FOUND')
+
+        self.drive_to_scan = f'{self.config.get("project_drive")}:\\'
 
 
-    def _update_project_drive(self, letter):
-        windows_req = ':\\'
-        self.project_drive = f'{letter}{windows_req}'
+    def _reload(self):
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r', encoding='utf-8') as f:
+                self.config = json.loads(f.read())
+                self.drive_to_scan = f'{self.config.get("project_drive")}:\\'
+        else:
+            print('NO CONFIG FOUND')
 
-        return self.project_drive
+
+    def get(self, attr=None):
+        """Accesses config file to retrivate data"""
+        self._reload()
+        if attr and attr in self.config:
+            return self.config[attr]
+        else:
+            return self.config
 
 
-    def fetch_drive(self):
-        return self.project_drive
+    def get_drive(self, letter=None):
+        self._reload()
+        """retrives formatted drive letter for use with the filesystem"""
+        if letter:
+            # TODO: slash hardcoding should be removed.
+            windows_req = ':\\'
+            self.drive_to_scan = f'{letter[0]}{windows_req}'
+            return self.drive_to_scan
+
+        else:
+            return self.drive_to_scan
 
 
 # HELPERS
-OFFICES = {'New York': 'nyarchive', 'London': '', 'Los Angeles': ''}
+OFFICES = {'New York': 'nyarchive', 'London': 'lnarchivebackup', 'Los Angeles': 'vhlabackup'}
 
 class Helpers():
     """Collection of helper functions, usually used for passing widgets between 
@@ -196,7 +236,7 @@ class NewClientDialog(QObject):
     def __init__(self, ui_file, config, clients=None, parent=None, helper=None):
 
         # globals
-        self.project_root = config.project_drive
+        self.project_root = config.drive_to_scan
 
         # UI
         ui_file = QFile(ui_file)
@@ -269,11 +309,11 @@ class AwsNotInstalled(QObject):
 
 
     def clicked_pb_config_awscli(self):
-        if aws.is_awscli_installed() and aws.does_aws_config_exist():
+        if io.is_awscli_installed() and io.check_aws_config():
             self.window.close()
         else:
+            aws.configure_awscli()
             self.window.close()
-            self.dialog = AwsNotInstalled(aws_not_installed_dialog)
 
 
 class WrongFolderStructure(QObject):
@@ -298,6 +338,40 @@ class WrongFolderStructure(QObject):
         self.window.close()
 
 
+class FirstTimeRun(QObject):
+    def __init__(self, ui_file, config):
+        # UI
+        ui_file = QFile(ui_file)
+        ui_file.open(QFile.ReadOnly)
+        loader = QUiLoader()
+        self.window = loader.load(ui_file)
+        ui_file.close()
+
+        # widgets
+        self.pb_save_default = self.window.findChild(QPushButton, 'pb_save_default')
+        self.cb_office_select = self.window.findChild(QComboBox, 'cb_officeSelect')
+        self.le_project_drive = self.window.findChild(QLineEdit, 'le_projectDrive')
+        self.le_archive_drive = self.window.findChild(QLineEdit, 'le_archiveDrive')
+
+        # actions
+        self.pb_save_default.clicked.connect(self.clicked_pb_save_default)
+
+        self.window.show()
+
+
+    def clicked_pb_save_default(self):
+        new_data = {
+            'first_run': False,
+            'office': self.cb_office_select.currentText(),
+            'project_drive': self.le_project_drive.text(),
+            'archive_drive': self.le_archive_drive.text()
+        }
+
+        io.write_default_config_file(default_config_file, new_data)
+
+        self.window.close()
+
+
 class ProjectCheckerDialog(QObject):
     # TODO: if user changes client during making a new job, the 
     # project list should update to the new client
@@ -313,6 +387,7 @@ class ProjectCheckerDialog(QObject):
 
         # widgets
         self.le_project_scan = self.window.findChild(QPushButton, 'le_project_scan')
+        self.le_project_scan.setText(f'Scan {self.config.get_drive()} drive for bad projects')
         self.project_tree = self.window.findChild(QTreeWidget, 'project_tree')
         self.project_tree.hide()
         self.main_layout = self.window.findChild(QVBoxLayout, 'verticalLayout')
@@ -336,10 +411,13 @@ class ProjectCheckerDialog(QObject):
     def clicked_le_project_scan(self, progress_callback):
         # TODO: refresh project_job_list after adding a new project
         self.project_tree.clear()
-        self.project_tree.hide()
         self.la_loading_wheel.show()
+        self.project_tree.show()
 
-        projects = project_scanner.get_folders(self.config.fetch_drive())
+        print('scanning')
+        print(self.config.get_drive())
+
+        projects = project_scanner.get_folders(self.config.get_drive())
         for project in projects:
             bad_project = project_scanner.run_report(project)
             if bad_project:
@@ -380,8 +458,6 @@ class ProjectCheckerDialog(QObject):
 
     def thread_complete(self):
         self.la_loading_wheel.hide()
-        self.project_tree.show()
-        print("THREAD COMPLETE!")
 
 
     def thread_project_scan(self):
@@ -538,6 +614,7 @@ class NewProjectDialog(QObject):
 
 class SettingsDialog(QObject):
     def __init__(self, ui_file, config, clients=None, parent=None, helper=None):
+        self.config = config
 
         # UI
         ui_file = QFile(ui_file)
@@ -546,7 +623,91 @@ class SettingsDialog(QObject):
         self.window = loader.load(ui_file)
         ui_file.close()
 
+        # widgets
+        self.gb_aws_validation = self.window.findChild(QGroupBox, 'gb_awsCred')
+        self.le_aws_access_id = self.window.findChild(QLineEdit, 'le_awsAccessId')
+        self.le_aws_secret_access = self.window.findChild(QLineEdit, 'le_awsSecretAccess')
+        self.le_region = self.window.findChild(QLineEdit, 'le_Region')
+        self.le_output = self.window.findChild(QLineEdit, 'le_Output')
+        self.w_aws_cred_holder = self.window.findChild(QWidget, 'w_awsCredHolder')
+        self.w_aws_cred_not_found = self.window.findChild(QWidget, 'w_awsCredNotFound')
+        self.pb_aws_config = self.window.findChild(QPushButton, 'pb_aws_config')
+        self.pb_discard = self.window.findChild(QPushButton, 'pb_discard')
+        self.pb_save_defaults = self.window.findChild(QPushButton, 'pb_saveDefaults')
+        self.pb_save_aws_defaults = self.window.findChild(QPushButton, 'pb_saveAwsDefaults')
+
+        self.cb_office_select = self.window.findChild(QComboBox, 'cb_officeSelect')
+        self.le_project_drive = self.window.findChild(QLineEdit, 'le_projectDrive')
+        self.le_archive_drive = self.window.findChild(QLineEdit, 'le_archiveDrive')
+
+        # actions
+        self.pb_aws_config.clicked.connect(self.clicked_pb_config_awscli)
+        self.pb_discard.clicked.connect(self.clicked_pb_discard)
+        self.pb_save_defaults.clicked.connect(self.clicked_pb_save_defaults)
+        self.pb_save_aws_defaults.clicked.connect(self.clicked_pb_save_aws_defaults)
+
+        if io.check_aws_config():
+            self.w_aws_cred_not_found.hide()
+            self.w_aws_cred_holder.show()
+
+            data = io.read_aws_cred()
+            self.le_aws_access_id.setText(data['aws_access_key_id'])
+            self.le_aws_secret_access.setText(data['aws_secret_access_key'])
+            self.le_region.setText(data['region'])
+            self.le_output.setText(data['output'])
+        else:
+            self.w_aws_cred_not_found.show()
+            self.w_aws_cred_holder.hide()
+
+        if config.get('first_run'):
+            self.dialog = FirstTimeRun(first_time_run_dialog, self.config)
+        else:
+            if config.get('office') in OFFICES:
+                self.cb_office_select.setCurrentText(config.get('office'))
+                self.le_project_drive.setText(config.get('project_drive'))
+                self.le_archive_drive.setText(config.get('archive_drive'))
+
+            if io.is_awscli_installed() and io.check_aws_config():
+                pass
+            else:
+                self.dialog = AwsNotInstalled(aws_not_installed_dialog)
+
         self.window.show()
+
+
+    def clicked_pb_config_awscli(self):
+        aws.configure_awscli()
+        self.window.close()
+
+
+    def clicked_pb_discard(self):
+        self.window.close()
+
+
+    def clicked_pb_save_defaults(self):
+        # self.cb_office_select.currentText()
+        # self.le_project_drive.text()
+        # self.le_archive_drive.text()
+
+        new_data = {
+            'first_run': False,
+            'office': self.cb_office_select.currentText(),
+            'project_drive': self.le_project_drive.text(),
+            'archive_drive': self.le_archive_drive.text()
+        }
+
+        io.write_default_config_file(default_config_file, new_data)
+
+
+    def clicked_pb_save_aws_defaults(self):
+        new_data = {
+            "aws_access_key_id": self.le_aws_access_id.text(),
+            "aws_secret_access_key":self.le_aws_secret_access.text(),
+            "region": self.le_region.text(),
+            "output": self.le_output.text()
+        }
+
+        io.write_aws_config_file(new_data)
 
 
 class ProjectUploadDialog(QObject):
@@ -560,6 +721,7 @@ class ProjectUploadDialog(QObject):
         self.window = loader.load(ui_file)
         ui_file.close()
 
+        self.config = config
         self.project_dir = 'Select a Project Folder...'
         self.bucket = None
 
@@ -574,13 +736,16 @@ class ProjectUploadDialog(QObject):
 
         # Widget Defaults
         self.le_project_folder.setText(self.project_dir)
+        if self.config.get('office') and self.config.get('office') in OFFICES:
+            self.cb_office.setCurrentText(self.config.get('office'))
+            self.bucket = OFFICES[self.config.get('office')]
 
         # actions
         self.pb_upload_archive.clicked.connect(self.thread_upload_archive)
         self.pb_select_dir.clicked.connect(self.clicked_pb_select_dir)
         self.cb_office.activated.connect(self.clicked_cb_office)
 
-        if aws.is_awscli_installed() and aws.does_aws_config_exist():
+        if io.is_awscli_installed() and io.check_aws_config():
             self.window.show()
         else:
             self.dialog = AwsNotInstalled(aws_not_installed_dialog)
@@ -606,12 +771,10 @@ class ProjectUploadDialog(QObject):
 
 
     def clicked_pb_upload_archive(self, progress_callback):
-        # TODO: Open new cmd in a different thread
-        # TODO: send commands to new cmd using user entered data
         # TODO: on upload completion, notify gui
-        # s3uri = 's3://nyarchive/test_client/test_project/'
-        
-        aws.run_upload(self.bucket, self.project_dir)
+
+        folders_to_ignore = io.get_immediate_subdirectories(self.project_dir)
+        aws.run_upload(self.bucket, self.project_dir, folders_to_ignore)
 
 
     def clicked_pb_select_dir(self):
@@ -666,7 +829,7 @@ class MainWindow(QObject):
         ui_file.close()
 
         # globals
-        self.project_root = config.project_drive
+        self.project_root = config.drive_to_scan
 
         # widgets
         self.client_list = self.window.findChild(QListWidget, 'client_list')
@@ -680,7 +843,8 @@ class MainWindow(QObject):
         self.fs_render = self.window.findChild(QPushButton, 'fs_render')
         self.pb_project_drive = self.window.findChild(QPushButton, 'pb_project_drive')
         self.le_project_drive = self.window.findChild(QLineEdit, 'le_project_drive')
-        self.le_project_drive.setPlaceholderText = self.project_root
+        self.le_project_drive.setText(self.config.get('project_drive'))
+
         self.pb_new_client = self.window.findChild(QPushButton, 'pb_new_client')
         self.pb_refresh = self.window.findChild(QPushButton, 'pb_refresh')
         self.pb_new_project = self.window.findChild(QPushButton, 'pb_new_project')
@@ -691,7 +855,6 @@ class MainWindow(QObject):
         # Menu > Archival
         self.menu_project_checker = self.window.findChild(QAction, 'actionProject_Checker')
         self.menu_project_upload = self.window.findChild(QAction, 'actionProject_Upload')
-
         # groups
         self.project_job_groupbox = self.window.findChild(QGroupBox, 'project_job_groupbox')
         self.hide(self.project_job_groupbox)
@@ -718,7 +881,9 @@ class MainWindow(QObject):
         self.menu_project_upload.triggered.connect(self.clicked_menu_project_upload)
         self.submenu_settings.triggered.connect(self.clicked_submenu_settings)
 
-        # start up
+        if config.get('first_run'):
+            self.dialog = FirstTimeRun(first_time_run_dialog, self.config)
+
         self.get_clients()
         self.window.show()
 
@@ -775,7 +940,6 @@ class MainWindow(QObject):
 
                 return True
             except:
-                print('Wrong folder structure')
                 self.dialog = WrongFolderStructure(wrong_folder_structure_dialog)
 
         else:
@@ -856,7 +1020,8 @@ class MainWindow(QObject):
 
 
     def clicked_pb_project_drive(self):
-        self.project_root = self.config._update_project_drive(self.le_project_drive.text())
+        # self.project_root = self.config._update_project_drive(self.le_project_drive.text())
+        self.project_root = self.config.get_drive(self.le_project_drive.text())
 
         self.client_list.clear()
         self.hide(self.project_job_groupbox)
@@ -944,7 +1109,11 @@ class MainWindow(QObject):
     # functions
     def get_clients(self):
         """appends list of clients to client_list"""
-        clients = io.Manager(self.project_root).get_clients()
+        clients = []
+        try:
+            clients = io.Manager(self.project_root).get_clients()
+        except Exception as e:
+            print(e)
         
         for client in clients:
             self.client_list.addItem(client)
@@ -997,44 +1166,40 @@ class MainWindow(QObject):
 
 
 if __name__ == '__main__':
-    default_config = Config()
+    default_config = NewConfig(default_config_file)
 
-    if default_config.project_drive:
-        app = QApplication(sys.argv)
-        # app.setQuitOnLastWindowClosed(False)
-        main = MainWindow(main_res, default_config)
+    app = QApplication(sys.argv)
+    # app.setQuitOnLastWindowClosed(False)
+    main = MainWindow(main_res, default_config)
 
-        # Create the icon
-        icon = QIcon(heart_artwork)
+    # Create the icon
+    icon = QIcon(heart_artwork)
 
-        # Create the tray
-        tray = QSystemTrayIcon()
-        tray.setIcon(icon)
-        tray.setVisible(True)
+    # Create the tray
+    tray = QSystemTrayIcon()
+    tray.setIcon(icon)
+    tray.setVisible(True)
 
-        # Menu items
-        menu = QMenu()
-        project_explorer_action = QAction("Project Explorer")
-        project_checker_action = QAction("Project Checker")
-        archive_uploader_action = QAction("Archive Uploader")
-        settings_action = QAction("Settings")
-        exit_action = QAction("Exit")
+    # Menu items
+    menu = QMenu()
+    project_explorer_action = QAction("Project Explorer")
+    project_checker_action = QAction("Project Checker")
+    archive_uploader_action = QAction("Archive Uploader")
+    settings_action = QAction("Settings")
+    exit_action = QAction("Exit")
 
-        # Menu actions
-        exit_action.triggered.connect(app.instance().quit)
+    # Menu actions
+    exit_action.triggered.connect(app.instance().quit)
 
-        # Menu finish
-        # menu.addAction(project_explorer_action)
-        # menu.addAction(project_checker_action)
-        # menu.addAction(archive_uploader_action)
-        # menu.addSeparator()
-        # menu.addAction(settings_action)
-        # menu.addSeparator()
-        menu.addAction(exit_action)
+    # Menu finish
+    # menu.addAction(project_explorer_action)
+    # menu.addAction(project_checker_action)
+    # menu.addAction(archive_uploader_action)
+    # menu.addSeparator()
+    # menu.addAction(settings_action)
+    # menu.addSeparator()
+    menu.addAction(exit_action)
 
-        tray.setContextMenu(menu)
+    tray.setContextMenu(menu)
 
-        sys.exit(app.exec_())
-
-    else:
-        print('Error Starting application.')
+    sys.exit(app.exec_())

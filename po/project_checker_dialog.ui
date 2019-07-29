@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>401</width>
-    <height>521</height>
+    <height>579</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -43,9 +43,9 @@
    <property name="geometry">
     <rect>
      <x>9</x>
-     <y>169</y>
+     <y>220</y>
      <width>381</width>
-     <height>341</height>
+     <height>350</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -92,6 +92,9 @@
     </item>
     <item>
      <widget class="QLabel" name="loadingWheel">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="text">
        <string>TextLabel</string>
       </property>
@@ -175,9 +178,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>90</y>
+     <y>110</y>
      <width>381</width>
-     <height>71</height>
+     <height>101</height>
     </rect>
    </property>
    <property name="title">
@@ -189,7 +192,7 @@
       <x>9</x>
       <y>20</y>
       <width>361</width>
-      <height>41</height>
+      <height>71</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -213,6 +216,13 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>3) Scan should be left to finish. Interupting it can cause Po to crash.</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </widget>
   </widget>
@@ -225,7 +235,7 @@
      <x>10</x>
      <y>10</y>
      <width>381</width>
-     <height>81</height>
+     <height>91</height>
     </rect>
    </property>
    <property name="autoFillBackground">
@@ -246,7 +256,7 @@
       <x>9</x>
       <y>19</y>
       <width>361</width>
-      <height>53</height>
+      <height>61</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -271,6 +281,13 @@
       <widget class="QLabel" name="label_3">
        <property name="text">
         <string>3) More blatent loading wheel?</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>4) build out scan cancel button/kill threads</string>
        </property>
       </widget>
      </item>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>542</height>
+    <height>538</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -20,13 +20,13 @@
    <string>Settings</string>
   </property>
   <property name="modal">
-   <bool>true</bool>
+   <bool>false</bool>
   </property>
   <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>160</y>
+     <y>80</y>
      <width>381</width>
      <height>131</height>
     </rect>
@@ -38,7 +38,7 @@
     </font>
    </property>
    <property name="title">
-    <string>Defaults</string>
+    <string>Office Defaults</string>
    </property>
    <property name="flat">
     <bool>false</bool>
@@ -66,7 +66,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox">
+        <widget class="QComboBox" name="cb_officeSelect">
          <item>
           <property name="text">
            <string>New York</string>
@@ -74,7 +74,7 @@
          </item>
          <item>
           <property name="text">
-           <string>LA</string>
+           <string>Los Angeles</string>
           </property>
          </item>
          <item>
@@ -96,14 +96,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit"/>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton">
-         <property name="text">
-          <string>PushButton</string>
-         </property>
-        </widget>
+        <widget class="QLineEdit" name="le_projectDrive"/>
        </item>
       </layout>
      </item>
@@ -112,24 +105,20 @@
        <item>
         <widget class="QLabel" name="label_3">
          <property name="text">
-          <string>Archive drive</string>
+          <string>Local Archive drive</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_2"/>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_2">
-         <property name="text">
-          <string>PushButton</string>
-         </property>
-        </widget>
+        <widget class="QLineEdit" name="le_archiveDrive"/>
        </item>
       </layout>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_6">
+      <widget class="QPushButton" name="pb_saveDefaults">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="text">
         <string>Save Defaults</string>
        </property>
@@ -138,13 +127,16 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QGroupBox" name="groupBox_2">
+  <widget class="QGroupBox" name="gb_awsCred">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>300</y>
+     <y>220</y>
      <width>381</width>
-     <height>191</height>
+     <height>251</height>
     </rect>
    </property>
    <property name="title">
@@ -157,83 +149,115 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>19</y>
+      <y>20</y>
       <width>361</width>
-      <height>161</height>
+      <height>228</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="verticalLayout_2">
+    <layout class="QVBoxLayout" name="vl_awsCredHolderOld">
      <property name="spacing">
       <number>3</number>
      </property>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_5">
-       <item>
-        <widget class="QLabel" name="label_5">
-         <property name="text">
-          <string>AWS Access Key ID</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="lineEdit_3"/>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_6">
-       <item>
-        <widget class="QLabel" name="label_10">
-         <property name="text">
-          <string>AWS Secret Access Key</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="lineEdit_4"/>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_7">
-       <item>
-        <widget class="QLabel" name="label_11">
-         <property name="text">
-          <string>Region</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="lineEdit_5"/>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_8">
-       <item>
-        <widget class="QLabel" name="label_12">
-         <property name="text">
-          <string>Output</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="lineEdit_6"/>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButton_3">
-       <property name="text">
-        <string>Validate Credentials</string>
-       </property>
+      <widget class="QWidget" name="w_awsCredNotFound" native="true">
+       <layout class="QHBoxLayout" name="vh_awsCredNotFound">
+        <item>
+         <widget class="QLabel" name="label_13">
+          <property name="text">
+           <string>No AWS Credentials Found</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pb_aws_config">
+          <property name="text">
+           <string>Configure</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_5">
-       <property name="text">
-        <string>Save Credentials</string>
-       </property>
+      <widget class="QWidget" name="w_awsCredHolder" native="true">
+       <layout class="QVBoxLayout" name="vl_awsCredHolder">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>AWS Access Key ID</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="le_awsAccessId"/>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>AWS Secret Access Key</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="le_awsSecretAccess"/>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
+          <item>
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Region</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="le_Region"/>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_8">
+          <item>
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>Output</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="le_Output"/>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_3">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Validate Credentials</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pb_saveAwsDefaults">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Save Credentials</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
     </layout>
@@ -248,7 +272,7 @@
      <x>10</x>
      <y>10</y>
      <width>381</width>
-     <height>81</height>
+     <height>61</height>
     </rect>
    </property>
    <property name="autoFillBackground">
@@ -269,76 +293,28 @@
       <x>9</x>
       <y>19</y>
       <width>361</width>
-      <height>53</height>
+      <height>34</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_4">
      <item>
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>1) Save below details to respective files.</string>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>2) Read AWS creds from %USERPROFILE%\.aws</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>3) Control flow that covers both Defaults and AWS files.</string>
+        <string>2) Control flow that covers both Defaults and AWS files.</string>
        </property>
       </widget>
      </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QGroupBox" name="groupBox_4">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>100</y>
-     <width>381</width>
-     <height>51</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>NOTES</string>
-   </property>
-   <widget class="QWidget" name="verticalLayoutWidget_4">
-    <property name="geometry">
-     <rect>
-      <x>9</x>
-      <y>20</y>
-      <width>361</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="QLabel" name="label_6">
+      <widget class="QLabel" name="label_9">
        <property name="text">
-        <string>1) None of this works yet :D</string>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
+        <string>3) Build out AWS validation</string>
        </property>
       </widget>
      </item>
     </layout>
    </widget>
   </widget>
-  <widget class="QPushButton" name="pushButton_4">
+  <widget class="QPushButton" name="pb_discard">
    <property name="geometry">
     <rect>
      <x>310</x>
